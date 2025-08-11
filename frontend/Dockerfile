@@ -1,14 +1,19 @@
-# build stage
-FROM node:18-alpine AS build-stage
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
+FROM node:18-alpine
 
-# production stage
-FROM nginx:stable-alpine AS production-stage
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-# The default port for nginx is 80. We will map this to FRONTEND_PORT in docker-compose.
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /app
+
+# Copy package.json and package-lock.json (if available)
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application source code
+COPY . .
+
+# Expose the Vite port
+EXPOSE 5173
+
+# Run the Vite dev server. 
+# The --host flag is crucial to expose the server to the host machine from inside the container.
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
