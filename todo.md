@@ -3,8 +3,8 @@
 Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die Analyse und Vorhersage von Aktienkursen.
 
 ## Phase 1: Projekt-Setup & Datenbeschaffung
-- [ ] **Technologiestack definieren:** Festlegen des Python-Frameworks (FastAPI), der Datenbank (PostgreSQL) und des Frontend-Frameworks (Vue.js 3).
-- [ ] **Projektstruktur initialisieren:** Erstellen der grundlegenden Ordnerstruktur und der Docker-Konfiguration.
+- [x] **Technologiestack definieren:** Festlegen des Python-Frameworks (FastAPI), der Datenbank (PostgreSQL) und des Frontend-Frameworks (Vue.js 3).
+- [x] **Projektstruktur initialisieren:** Erstellen der grundlegenden Ordnerstruktur und der Docker-Konfiguration.
 - [ ] **Datenquelle identifizieren:** Eine zuverlässige API für die Kursdaten des "MSCI World All Countries" Index finden.
 - [ ] **Datenabruf implementieren:** Ein Skript entwickeln, das aktuelle und historische Kursdaten von der API abruft.
 - [ ] **Datenbank-Schema entwerfen:** Die notwendigen SQL-Tabellen für Aktien, Kurse und Vorhersagen definieren.

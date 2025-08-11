@@ -25,3 +25,7 @@ This file contains notes and context for the Gemini assistant.
     - Display P/L graph.
     - Display market opening hours, converted to user's timezone.
     - **Internal Wiki:** A section in the frontend for documenting the application's functionality and architecture.
+
+## Workflow
+- After each successfully completed step, I will mark the task as done in `todo.md`.
+- I will create a new Git commit after every significant, successful step.
