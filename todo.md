@@ -7,15 +7,16 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 - [x] **Projektstruktur initialisieren:** Erstellen der grundlegenden Ordnerstruktur und der Docker-Konfiguration.
 - [x] **Backend-Architektur festlegen:** Aufteilung in drei Dienste (Data-Fetcher, KNN-Worker, API-Server) mit WebSocket-Kommunikation.
 - [ ] **Datenquelle identifizieren:** Eine zuverlässige API für die Kursdaten des "MSCI World All Countries" Index finden.
-- [ ] **Datenbank-Schema entwerfen:** Die notwendigen SQL-Tabellen für Aktien, Kurse und Vorhersagen definieren.
-- [ ] **Docker-Compose-Setup erweitern:** Die `docker-compose.yml` für die drei Backend-Dienste, Frontend und DB anpassen.
+- [x] **Datenbank-Schema entwerfen:** Die notwendigen SQL-Tabellen für Aktien, Kurse und Vorhersagen definieren.
+- [x] **Docker-Compose-Setup erweitern:** Die `docker-compose.yml` für die drei Backend-Dienste, Frontend und DB anpassen.
 
 ## Phase 2: Backend-Services Implementierung
 
 ### Data-Fetcher Service
-- [ ] **Datenabruf implementieren:** Ein Skript entwickeln, das aktuelle und historische Kursdaten von der API abruft.
-- [ ] **Scheduler integrieren:** Den Datenabruf so planen, dass er alle 5 Minuten ausgeführt wird.
-- [ ] **Datenbank-Anbindung:** Die abgerufenen Daten in der PostgreSQL-Datenbank speichern.
+- [x] **Datenabruf implementieren:** Ein Skript entwickeln, das aktuelle und historische Kursdaten von der API abruft (aktuell simuliert).
+- [x] **Scheduler integrieren:** Den Datenabruf so planen, dass er alle 5 Minuten ausgeführt wird.
+- [x] **Datenbank-Anbindung:** Die abgerufenen Daten in der PostgreSQL-Datenbank speichern.
+- [x] **Börsenzeiten & Crypto-Logik:** Implementiert, um nur zu Öffnungszeiten Aktien und rund um die Uhr Kryptos abzufragen.
 
 ### KNN-Worker Service
 - [ ] **Handelszeiten-Logik:** Eine Funktion implementieren, die prüft, ob die globalen Börsen geöffnet sind.

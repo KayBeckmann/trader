@@ -37,6 +37,9 @@ dist/
 dist-ssr/
 *.local
 
+# Project Data
+/data/
+
 # IDE / OS
 .idea/
 .vscode/
