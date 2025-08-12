@@ -1,87 +1,44 @@
-# Project Title
+# Stock Trader AI
 
-A brief description of what this project does and who it's for.
+This project is a web-based application that uses a neural network to analyze stock data from the MSCI World All Countries index and predict the top 10 "long" and top 10 "short" stocks.
+
+## Architecture
+
+The application is built with a microservices architecture and runs entirely in Docker containers, managed by Docker Compose.
+
+- **Frontend:** A responsive web interface built with **Vue.js 3**. It communicates with the backend via a REST API and receives real-time updates through WebSockets.
+
+- **Backend:** The backend is split into three distinct Python services:
+  - **1. Data-Fetcher:** This service periodically polls a financial data source every 5 minutes to retrieve the latest stock information.
+  - **2. KNN-Worker:** The core of the application. This service takes the data from the Data-Fetcher and uses a neural network (built from scratch with NumPy) to perform the analysis and generate predictions.
+  - **3. API-Server:** This **FastAPI** service acts as the main gateway for the frontend. It serves data via a REST API and pushes real-time prediction updates to the frontend using **WebSockets**.
+
+- **Database:** A **PostgreSQL** database is used for storing historical stock data, predictions, and performance metrics.
+
+![Architecture Diagram](https://i.imgur.com/your-diagram-link.png)  <-- Placeholder for a future diagram
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+To get the project running on your local machine, you will need Docker and Docker Compose installed.
 
-### Prerequisites
+1.  Clone the repository:
+    ```sh
+    git clone https://github.com/your-username/trader.git
+    cd trader
+    ```
+2.  Create a local environment file from the example:
+    ```sh
+    cp env-example .env
+    ```
+3.  Update the `.env` file with your specific configurations (e.g., API keys for the data source).
 
-What things you need to install the software and how to install them.
+4.  Build and run the application using Docker Compose:
+    ```sh
+    docker-compose up --build
+    ```
 
-```
-Give examples
-```
-
-### Installing
-
-A step-by-step series of examples that tell you how to get a development environment running.
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo.
-
-## Running the tests
-
-Explain how to run the automated tests for this system.
-
-### Break down into end-to-end tests
-
-Explain what these tests test and why.
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why.
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system.
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - RSS Reader
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
-
-## Authors
-
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+Once the containers are running, the frontend will be accessible at `http://localhost:8080` (or the port you configure).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
