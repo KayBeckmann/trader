@@ -19,6 +19,9 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 - [x] **Börsenzeiten & Crypto-Logik:** Implementiert, um nur zu Öffnungszeiten Aktien und rund um die Uhr Kryptos abzufragen.
 
 ### KNN-Worker Service
+- [ ] **Redis-Integration:** Eine Redis-Instanz für die asynchrone Kommunikation zwischen dem Data-Fetcher und dem KNN-Worker einrichten.
+    - [ ] Der Data-Fetcher publiziert eine Nachricht nach erfolgreichem Datenabruf.
+    - [ ] Der KNN-Worker lauscht auf diese Nachrichten, um die Analyse zu starten.
 - [ ] **Handelszeiten-Logik:** Eine Funktion implementieren, die prüft, ob die globalen Börsen geöffnet sind.
 - [ ] **Grundgerüst des Neuronalen Netzes (Eigenentwicklung):** Das Modell von Grund auf mit Python/NumPy entwickeln.
 - [ ] **Datenvorverarbeitung:** Die Rohdaten aus der DB für das Training des Netzes normalisieren und aufbereiten.
