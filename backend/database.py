@@ -1,4 +1,3 @@
-
 import os
 import psycopg2
 from psycopg2 import sql
@@ -25,6 +24,14 @@ def get_db_connection():
             else:
                 print("Could not connect to the database. Exiting.")
                 raise
+
+def column_exists(cursor, table_name, column_name):
+    """Checks if a column exists in a table."""
+    cursor.execute("""
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = %s AND column_name = %s
+    """, (table_name, column_name))
+    return cursor.fetchone() is not None
 
 def initialize_database():
     """
@@ -63,6 +70,16 @@ def initialize_database():
                     order_size NUMERIC(10, 2) NOT NULL
                 );
             """)
+
+            # Add columns to training table if they don't exist
+            if not column_exists(cur, 'training', 'status'):
+                cur.execute("ALTER TABLE training ADD COLUMN status VARCHAR(10) NOT NULL DEFAULT 'open'")
+            if not column_exists(cur, 'training', 'close_price'):
+                cur.execute("ALTER TABLE training ADD COLUMN close_price NUMERIC(15, 5)")
+            if not column_exists(cur, 'training', 'close_timestamp'):
+                cur.execute("ALTER TABLE training ADD COLUMN close_timestamp BIGINT")
+            if not column_exists(cur, 'training', 'profit_loss'):
+                cur.execute("ALTER TABLE training ADD COLUMN profit_loss NUMERIC(15, 5)")
 
             # Create the trades table for profit/loss tracking
             cur.execute("""

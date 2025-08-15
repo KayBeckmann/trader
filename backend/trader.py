@@ -1,4 +1,3 @@
-
 import os
 import time
 import json
@@ -9,72 +8,73 @@ def get_redis_connection():
     """Establishes a connection to Redis."""
     return redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
-def open_trade(db_conn, symbol, position_type):
-    """Opens a new trade in the database."""
-    print(f"Opening a {position_type} trade for {symbol}...")
-    try:
-        with db_conn.cursor() as cur:
-            # Get the latest price for the symbol
-            cur.execute("""
-                SELECT price FROM stock_prices 
-                WHERE symbol = %s ORDER BY timestamp DESC LIMIT 1
-            """, (symbol,))
-            latest_price = cur.fetchone()
+def open_trades(db_conn, symbols, position_type):
+    """Opens new trades for a list of symbols."""
+    print(f"Opening {position_type} trades for: {symbols}")
+    for symbol in symbols:
+        try:
+            with db_conn.cursor() as cur:
+                cur.execute("SELECT price FROM stock_prices WHERE symbol = %s ORDER BY timestamp DESC LIMIT 1", (symbol,))
+                latest_price = cur.fetchone()
 
-            if not latest_price:
-                print(f"Could not find a price for {symbol}. Trade not opened.")
-                return
+                if not latest_price:
+                    print(f"Could not find a price for {symbol}. Trade not opened.")
+                    continue
 
-            open_price = latest_price[0]
-            fee = 5.00
-            open_timestamp = int(time.time())
+                open_price = latest_price[0]
+                fee = 5.00
+                open_timestamp = int(time.time())
 
-            cur.execute("""
-                INSERT INTO trades (symbol, position_type, open_price, fee, open_timestamp, status)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (symbol, position_type, open_price, fee, open_timestamp, 'open'))
+                cur.execute("""
+                    INSERT INTO trades (symbol, position_type, open_price, fee, open_timestamp, status)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (symbol, position_type, open_price, fee, open_timestamp, 'open'))
+                print(f"Opened {position_type} trade for {symbol} at {open_price}")
             db_conn.commit()
-            print(f"Opened {position_type} trade for {symbol} at {open_price}")
 
-    except Exception as e:
-        print(f"Error opening trade: {e}")
-        db_conn.rollback()
+        except Exception as e:
+            print(f"Error opening trade for {symbol}: {e}")
+            db_conn.rollback()
 
 def check_and_close_trades(db_conn):
-    """Checks for open trades and closes them after a fixed time (e.g., 1 hour)."""
-    print("Checking for trades to close...")
+    """Checks and closes open trades based on SL, TP, or time."""
+    # print("Checking for trades to close...")
     try:
         with db_conn.cursor() as cur:
-            one_hour_ago = int(time.time()) - 3600
-            cur.execute("SELECT id, symbol, position_type, open_price, fee FROM trades WHERE status = 'open' AND open_timestamp <= %s", (one_hour_ago,))
+            cur.execute("SELECT id, symbol, position_type, open_price, open_timestamp, fee FROM trades WHERE status = 'open'")
             open_trades = cur.fetchall()
 
             for trade in open_trades:
-                trade_id, symbol, position_type, open_price, fee = trade
+                trade_id, symbol, pos_type, open_price, open_ts, fee = trade
                 
-                # Get the current price to close the trade
                 cur.execute("SELECT price FROM stock_prices WHERE symbol = %s ORDER BY timestamp DESC LIMIT 1", (symbol,))
                 current_price_row = cur.fetchone()
                 if not current_price_row:
-                    print(f"Could not find current price for {symbol} to close trade {trade_id}. Skipping.")
                     continue
                 
-                close_price = current_price_row[0]
-                close_timestamp = int(time.time())
+                current_price = current_price_row[0]
+                
+                pnl_percentage = ((current_price - open_price) / open_price) * 100 if pos_type == 'long' else ((open_price - current_price) / open_price) * 100
 
-                # Calculate profit/loss
-                if position_type == 'long':
-                    profit_loss = (close_price - open_price) - fee
-                else: # short
-                    profit_loss = (open_price - close_price) - fee
+                should_close = False
+                if pnl_percentage <= -10: # Stop-Loss
+                    print(f"Closing trade {trade_id} ({symbol} {pos_type}) due to Stop-Loss.")
+                    should_close = True
+                elif pnl_percentage >= 10: # Take-Profit
+                    print(f"Closing trade {trade_id} ({symbol} {pos_type}) due to Take-Profit.")
+                    should_close = True
+                elif int(time.time()) - open_ts >= 3600: # 1-hour timeout
+                    print(f"Closing trade {trade_id} ({symbol} {pos_type}) due to 1-hour timeout.")
+                    should_close = True
 
-                # Update the trade record
-                cur.execute("""
-                    UPDATE trades
-                    SET close_price = %s, profit_loss = %s, close_timestamp = %s, status = 'closed'
-                    WHERE id = %s
-                """, (close_price, profit_loss, close_timestamp, trade_id))
-                print(f"Closed trade {trade_id} for {symbol}. P/L: {profit_loss:.2f}")
+                if should_close:
+                    profit_loss = (current_price - open_price - fee) if pos_type == 'long' else (open_price - current_price - fee)
+                    close_timestamp = int(time.time())
+                    cur.execute("""
+                        UPDATE trades
+                        SET status = 'closed', close_price = %s, close_timestamp = %s, profit_loss = %s
+                        WHERE id = %s
+                    """, (current_price, close_timestamp, profit_loss, trade_id))
 
             db_conn.commit()
 
@@ -94,22 +94,19 @@ def main():
     print("Subscribed to 'predictions' channel.")
 
     while True:
-        # Listen for prediction messages
         message = pubsub.get_message()
         if message and message['type'] == 'message':
             try:
                 data = json.loads(message['data'])
-                symbol = data['symbol']
-                prediction = data['prediction']
-                print(f"Received prediction: {prediction} for {symbol}")
-                open_trade(db_conn, symbol, prediction)
+                if 'long' in data:
+                    open_trades(db_conn, data['long'], 'long')
+                if 'short' in data:
+                    open_trades(db_conn, data['short'], 'short')
             except (json.JSONDecodeError, KeyError) as e:
                 print(f"Could not parse prediction message: {message['data']}. Error: {e}")
 
-        # Periodically check for trades to close
         check_and_close_trades(db_conn)
-        
-        time.sleep(1) # Sleep to prevent busy-waiting
+        time.sleep(5) # Check every 5 seconds
 
 if __name__ == "__main__":
     main()

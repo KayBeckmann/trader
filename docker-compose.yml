@@ -28,7 +28,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python data_fetcher.py
+    command: python -u data_fetcher.py
     restart: always
     volumes:
       - ./backend:/app
@@ -46,7 +46,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python trainer.py
+    command: python -u trainer.py
     restart: always
     volumes:
       - ./backend:/app
@@ -79,7 +79,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python knn_worker.py
+    command: python -u knn_worker.py
     restart: always
     volumes:
       - ./backend:/app
@@ -96,7 +96,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python trader.py
+    command: python -u trader.py
     restart: always
     volumes:
       - ./backend:/app
