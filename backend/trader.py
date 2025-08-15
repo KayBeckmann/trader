@@ -42,7 +42,7 @@ def open_trade(db_conn, symbol, position_type):
 
 def check_and_close_trades(db_conn):
     """Checks for open trades and closes them after a fixed time (e.g., 1 hour)."""
-    # print("Checking for trades to close...")
+    print("Checking for trades to close...")
     try:
         with db_conn.cursor() as cur:
             one_hour_ago = int(time.time()) - 3600
@@ -85,6 +85,7 @@ def check_and_close_trades(db_conn):
 def main():
     """Main loop for the trader service."""
     print("Starting trader service...")
+    database.initialize_database()
     db_conn = database.get_db_connection()
     redis_conn = get_redis_connection()
 

@@ -66,10 +66,12 @@ def main():
     pubsub.subscribe('data-fetched')
 
     print("Waiting for data-fetched message from Redis...")
-    for message in pubsub.listen():
-        if message['type'] == 'message':
+    while True:
+        message = pubsub.get_message()
+        if message and message['type'] == 'message':
             print(f"Received message: {message['data']}")
             process_data(db_conn)
+        time.sleep(1) # Prevent busy-waiting
 
 if __name__ == "__main__":
     main()
