@@ -49,8 +49,39 @@ def initialize_database():
                 CREATE INDEX IF NOT EXISTS idx_stock_prices_symbol_timestamp 
                 ON stock_prices (symbol, timestamp DESC);
             """)
+
+            # Create the training table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS training (
+                    id SERIAL PRIMARY KEY,
+                    symbol VARCHAR(20) NOT NULL,
+                    asset_type VARCHAR(10) NOT NULL,
+                    position_type VARCHAR(5) NOT NULL, -- 'long' or 'short'
+                    open_price NUMERIC(15, 5) NOT NULL,
+                    timestamp BIGINT NOT NULL,
+                    order_fee NUMERIC(10, 2) NOT NULL,
+                    order_size NUMERIC(10, 2) NOT NULL
+                );
+            """)
+
+            # Create the trades table for profit/loss tracking
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS trades (
+                    id SERIAL PRIMARY KEY,
+                    symbol VARCHAR(20) NOT NULL,
+                    position_type VARCHAR(5) NOT NULL, -- 'long' or 'short'
+                    open_price NUMERIC(15, 5) NOT NULL,
+                    close_price NUMERIC(15, 5),
+                    fee NUMERIC(10, 2) NOT NULL,
+                    profit_loss NUMERIC(15, 5),
+                    open_timestamp BIGINT NOT NULL,
+                    close_timestamp BIGINT,
+                    status VARCHAR(10) NOT NULL -- 'open' or 'closed'
+                );
+            """)
+
             conn.commit()
-        print("Table 'stock_prices' is ready.")
+        print("Tables 'stock_prices', 'training', and 'trades' are ready.")
     finally:
         conn.close()
 

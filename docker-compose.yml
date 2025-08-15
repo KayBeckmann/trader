@@ -16,6 +16,13 @@ services:
     networks:
       - trader_net
 
+  redis:
+    image: redis:7-alpine
+    container_name: trader_redis
+    restart: always
+    networks:
+      - trader_net
+
   data-fetcher:
     container_name: trader_data_fetcher
     build:
@@ -28,6 +35,24 @@ services:
       - ./stocks.txt:/app/stocks.txt
     depends_on:
       - postgres
+      - redis
+    networks:
+      - trader_net
+    env_file:
+      - .env
+
+  trainer:
+    container_name: trader_trainer
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python trainer.py
+    restart: always
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
     networks:
       - trader_net
     env_file:
@@ -49,19 +74,39 @@ services:
   #   env_file:
   #     - .env
 
-  # --- Placeholder for KNN Worker ---
-  # knn-worker:
-  #   container_name: trader_knn_worker
-  #   build: ./backend
-  #   restart: always
-  #   volumes:
-  #     - ./backend:/app
-  #   depends_on:
-  #     - postgres
-  #   networks:
-  #     - trader_net
-  #   env_file:
-  #     - .env
+  knn-worker:
+    container_name: trader_knn_worker
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python knn_worker.py
+    restart: always
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - trader_net
+    env_file:
+      - .env
+
+  trader:
+    container_name: trader_trader
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python trader.py
+    restart: always
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - trader_net
+    env_file:
+      - .env
 
   frontend:
     container_name: trader_frontend

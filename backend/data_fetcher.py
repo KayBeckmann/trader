@@ -56,6 +56,12 @@ def save_price_to_db(conn, symbol, asset_type, price, timestamp):
             (symbol, asset_type, price, timestamp)
         )
 
+import redis
+
+def get_redis_connection():
+    """Establishes a connection to Redis."""
+    return redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
+
 def main_loop():
     """
     The main loop for the data fetcher service.
@@ -67,6 +73,7 @@ def main_loop():
         return
 
     db_conn = database.get_db_connection()
+    redis_conn = get_redis_connection()
 
     while True:
         print("--- New fetch cycle --- ")
@@ -93,6 +100,13 @@ def main_loop():
             except Exception as e:
                 print(f"Error processing {symbol}: {e}")
                 db_conn.rollback() # Rollback on error for this asset
+
+        # Publish message to Redis
+        try:
+            redis_conn.publish('data-fetched', 'true')
+            print("Published data-fetched message to Redis.")
+        except Exception as e:
+            print(f"Error publishing to Redis: {e}")
 
         print(f"Cycle finished. Waiting for 5 minutes...")
         time.sleep(300) # Wait for 5 minutes
