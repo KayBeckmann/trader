@@ -18,19 +18,35 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 - [x] **Datenbank-Anbindung:** Die abgerufenen Daten in der PostgreSQL-Datenbank speichern.
 - [x] **Börsenzeiten & Crypto-Logik:** Implementiert, um nur zu Öffnungszeiten Aktien und rund um die Uhr Kryptos abzufragen.
 
+### Trainer Service
+- [x] **Redis-Integration:** Eine Redis-Instanz für die asynchrone Kommunikation einrichten.
+    - [x] Der Data-Fetcher publiziert eine Nachricht nach erfolgreichem Datenabruf.
+    - [x] Der Trainer lauscht auf diese Nachrichten, um die Analyse zu starten.
+- [x] **Datenbank-Anbindung:** Die abgerufenen Daten aus der `stock_prices` Tabelle lesen.
+- [x] **Virtuelle Positionen erstellen:** Für jeden Datensatz eine virtuelle Long- und Short-Position erstellen.
+    - [x] Ordergebühr: 5€
+    - [x] Ordergröße: 100€
+- [x] **Daten in `training` Tabelle speichern:** Die erstellten Positionen mit Zeitstempel in der Datenbank speichern.
+
 ### KNN-Worker Service
-- [ ] **Redis-Integration:** Eine Redis-Instanz für die asynchrone Kommunikation zwischen dem Data-Fetcher und dem KNN-Worker einrichten.
-    - [ ] Der Data-Fetcher publiziert eine Nachricht nach erfolgreichem Datenabruf.
-    - [ ] Der KNN-Worker lauscht auf diese Nachrichten, um die Analyse zu starten.
-- [ ] **Handelszeiten-Logik:** Eine Funktion implementieren, die prüft, ob die globalen Börsen geöffnet sind.
-- [ ] **Grundgerüst des Neuronalen Netzes (Eigenentwicklung):** Das Modell von Grund auf mit Python/NumPy entwickeln.
-- [ ] **Datenvorverarbeitung:** Die Rohdaten aus der DB für das Training des Netzes normalisieren und aufbereiten.
-- [ ] **Vorhersage-Implementierung:** Die Logik erstellen, die basierend auf dem NN-Output die Top 10 Long- und Short-Positionen identifiziert.
+- [x] **Redis-Integration:** Eine Redis-Instanz für die asynchrone Kommunikation zwischen dem Data-Fetcher und dem KNN-Worker einrichten.
+    - [x] Der Data-Fetcher publiziert eine Nachricht nach erfolgreichem Datenabruf.
+    - [x] Der KNN-Worker lauscht auf diese Nachrichten, um die Analyse zu starten.
+- [x] **Handelszeiten-Logik:** Eine Funktion implementieren, die prüft, ob die globalen Börsen geöffnet sind.
+- [x] **Grundgerüst des Neuronalen Netzes (Eigenentwicklung):** Das Modell von Grund auf mit Python/NumPy entwickeln.
+- [x] **Datenvorverarbeitung:** Die Rohdaten aus der DB für das Training des Netzes normalisieren und aufbereiten.
+- [x] **Vorhersage-Implementierung:** Die Logik erstellen, die basierend auf dem NN-Output die Top 10 Long- und Short-Positionen identifiziert.
 - [ ] **Kommunikation mit API-Server:** Mechanismus implementieren, um neue Vorhersagen an den API-Server zu senden.
-- [ ] **Automatisches Training:** Den Backpropagation-Prozess implementieren, der nach 1 und 2 Stunden zur Neubewertung und zum Training des Modells angestoßen wird.
+- [x] **Automatisches Training:** Den Backpropagation-Prozess implementieren, der nach 1 und 2 Stunden zur Neubewertung und zum Training des Modells angestoßen wird.
 - [ ] **Performance-Tracking:** Die Logik zur Berechnung von Gewinn und Verlust für die Auswertung entwickeln.
 
 ### API-Server Service
+
+### Trader Service
+- [x] **Redis-Integration:** Auf Vorhersagen vom KNN-Worker lauschen.
+- [x] **Virtuelle Orders erstellen:** Basierend auf den Vorhersagen Trades in der `trades` Tabelle öffnen.
+- [x] **Gewinn/Verlust berechnen:** Offene Trades nach einer bestimmten Zeit schließen und den G/V berechnen.
+
 - [ ] **REST-API Endpunkte definieren:**
     - [ ] Endpunkt für die initialen Top 10 Listen.
     - [ ] Endpunkt für die Gewinn/Verlust-Daten zur Visualisierung.
