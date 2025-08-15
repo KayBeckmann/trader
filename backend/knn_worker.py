@@ -4,6 +4,7 @@ import json
 import numpy as np
 import redis
 import database
+import pickle
 
 def get_redis_connection():
     """Establishes a connection to Redis."""
@@ -16,13 +17,23 @@ class NeuralNetwork:
         self.hidden_layers = hidden_layers
         self.nodes_per_layer = nodes_per_layer
 
-        self.weights = []
-        self.biases = []
+        self.model_path = os.path.join(os.path.dirname(__file__), '../data/nn_model.pkl')
 
-        layer_sizes = [input_size] + [nodes_per_layer] * hidden_layers + [output_size]
-        for i in range(len(layer_sizes) - 1):
-            self.weights.append(np.random.randn(layer_sizes[i], layer_sizes[i+1]) * np.sqrt(2. / layer_sizes[i]))
-            self.biases.append(np.zeros((1, layer_sizes[i+1])))
+        if os.path.exists(self.model_path):
+            print(f"Loading Neural Network model from {self.model_path}")
+            with open(self.model_path, 'rb') as f:
+                data = pickle.load(f)
+                self.weights = data['weights']
+                self.biases = data['biases']
+        else:
+            print("No existing Neural Network model found. Initializing with random weights.")
+            self.weights = []
+            self.biases = []
+
+            layer_sizes = [input_size] + [nodes_per_layer] * hidden_layers + [output_size]
+            for i in range(len(layer_sizes) - 1):
+                self.weights.append(np.random.randn(layer_sizes[i], layer_sizes[i+1]) * np.sqrt(2. / layer_sizes[i]))
+                self.biases.append(np.zeros((1, layer_sizes[i+1])))
 
     def _relu(self, x):
         return np.maximum(0, x)
@@ -71,6 +82,12 @@ class NeuralNetwork:
             if epoch % 100 == 0:
                 loss = -np.mean(y * np.log(output + 1e-8))
                 print(f"Epoch {epoch}, Loss: {loss:.4f}")
+        
+        # Save the trained weights and biases
+        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+        with open(self.model_path, 'wb') as f:
+            pickle.dump({'weights': self.weights, 'biases': self.biases}, f)
+        print(f"Neural Network model saved to {self.model_path}")
 
 def get_training_data(db_conn):
     """Fetches closed training trades from the database."""
