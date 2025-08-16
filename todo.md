@@ -48,7 +48,7 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 - [x] **Webseite strukturieren:** Das grundlegende HTML/CSS-Layout erstellen.
 - [x] **WebSocket-Client implementieren:** Die Verbindung zum Backend herstellen und auf neue Daten lauschen.
 - [x] **Daten-Anzeige:** Die Top 10 Listen dynamisch auf der Webseite anzeigen und bei Push-Events aktualisieren.
-- [ ] **Graphen-Visualisierung:** Den Gewinn/Verlust-Verlauf mit einer Charting-Bibliothek (z.B. Chart.js) visualisieren.
+- [x] **Graphen-Visualisierung:** Den Gewinn/Verlust-Verlauf mit einer Charting-Bibliothek (z.B. Chart.js) visualisieren.
 - [ ] **Zeitzonen-Umrechnung:** Die Börsenöffnungszeiten im Frontend in die lokale Zeitzone des Benutzers umrechnen und anzeigen.
 - [ ] **Wiki-Sektion erstellen:** Einen Bereich für die Dokumentation der Anwendungsfunktionen und -architektur anlegen.
 

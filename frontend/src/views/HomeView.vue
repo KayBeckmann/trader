@@ -37,11 +37,14 @@
       </div>
     </div>
 
-    <!-- P/L Chart Placeholder -->
+    <!-- P/L Chart -->
     <div class="card mt-4">
       <div class="card-body">
         <h5 class="card-title">Profit/Loss History</h5>
-        <p class="card-text text-muted">Chart visualization will be implemented here.</p>
+        <div v-if="chartData.datasets[0].data.length > 1">
+           <LineChart :chartData="chartData" style="height: 300px"/>
+        </div>
+        <p v-else class="card-text text-muted">Not enough trade data to display a chart.</p>
       </div>
     </div>
 
@@ -50,9 +53,11 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue';
+import LineChart from '../components/LineChart.vue';
 
 export default {
   name: 'HomeView',
+  components: { LineChart },
   setup() {
     const predictions = ref({ long: [], short: [] });
     const trades = ref([]);
@@ -60,6 +65,38 @@ export default {
     const isMarketOpen = ref(false);
 
     const marketStatus = computed(() => isMarketOpen.value ? 'OPEN' : 'CLOSED');
+
+    // Process trade data for the chart
+    const chartData = computed(() => {
+      const sortedTrades = [...trades.value].sort((a, b) => a.timestamp - b.timestamp);
+      let cumulativePl = 0;
+      const data = [];
+      const labels = [];
+
+      // Start with a zero point
+      data.push(0);
+      labels.push('Start');
+
+      sortedTrades.forEach(trade => {
+        cumulativePl += trade.profit_loss;
+        data.push(cumulativePl);
+        labels.push(new Date(trade.timestamp * 1000).toLocaleTimeString());
+      });
+
+      return {
+        labels,
+        datasets: [
+          {
+            label: 'Cumulative P/L',
+            backgroundColor: '#f87979',
+            borderColor: '#f87979',
+            data: data,
+            fill: false,
+            tension: 0.1
+          }
+        ]
+      };
+    });
 
     // Fetch initial data from REST APIs
     const fetchData = async () => {
@@ -133,7 +170,8 @@ export default {
       trades,
       marketHours,
       isMarketOpen,
-      marketStatus
+      marketStatus,
+      chartData
     };
   }
 }
