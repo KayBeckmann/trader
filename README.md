@@ -1,5 +1,7 @@
 # Stock Trader AI
 
+**Forschungsprojekt und KEINE Anlageberatung**
+
 This project is a web-based application that uses a neural network to analyze stock data and predict the top 10 "long" and top 10 "short" stocks.
 
 ## Architecture

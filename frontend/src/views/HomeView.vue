@@ -1,5 +1,8 @@
 <template>
   <div class="home">
+    <div class="alert alert-warning" role="alert">
+      <strong>Forschungsprojekt und KEINE Anlageberatung</strong>
+    </div>
     <!-- Market Status -->
     <div class="card mb-4">
       <div class="card-body">
