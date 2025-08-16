@@ -36,13 +36,13 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 - [x] **Live-Trading (virtuell):** Eröffnet Trades basierend auf den Vorhersagen.
 - [x] **Positions-Management:** Schließt Positionen bei 10% Stop-Loss/Take-Profit oder nach 1 Stunde und speichert das Ergebnis.
 
-- [ ] **REST-API Endpunkte definieren:**
-    - [ ] Endpunkt für die initialen Top 10 Listen.
-    - [ ] Endpunkt für die Gewinn/Verlust-Daten zur Visualisierung.
-    - [ ] Endpunkt, der die Börsenöffnungszeiten übermittelt.
-- [ ] **WebSocket-Implementierung:**
-    - [ ] Einen WebSocket-Endpunkt einrichten, zu dem sich das Frontend verbinden kann.
-    - [ ] Logik implementieren, um neue Vorhersagen vom KNN-Worker zu empfangen und an alle verbundenen Clients zu pushen.
+- [x] **REST-API Endpunkte definieren:**
+    - [x] Endpunkt für die initialen Top 10 Listen.
+    - [x] Endpunkt für die Gewinn/Verlust-Daten zur Visualisierung.
+    - [x] Endpunkt, der die Börsenöffnungszeiten übermittelt.
+- [x] **WebSocket-Implementierung:**
+    - [x] Einen WebSocket-Endpunkt einrichten, zu dem sich das Frontend verbinden kann.
+    - [x] Logik implementieren, um neue Vorhersagen vom KNN-Worker zu empfangen und an alle verbundenen Clients zu pushen.
 
 ## Phase 3: Web-Frontend
 - [ ] **Webseite strukturieren:** Das grundlegende HTML/CSS-Layout erstellen.

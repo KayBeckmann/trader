@@ -212,6 +212,7 @@ def main():
                 if top_long or top_short:
                     prediction_message = json.dumps({'long': top_long, 'short': top_short})
                     try:
+                        redis_conn.set('latest_predictions', prediction_message) # Store the latest predictions
                         redis_conn.publish('predictions', prediction_message)
                         print(f"Published predictions: {prediction_message}")
                     except Exception as e:

@@ -3,3 +3,5 @@ pytz
 redis
 numpy
 yfinance
+fastapi
+uvicorn
