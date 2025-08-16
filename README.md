@@ -33,7 +33,7 @@ To get the project running on your local machine, you will need Docker and Docke
     ```sh
     cp env-exmample .env
     ```
-3.  Update the `.env` file with your specific configurations if needed (e.g., database credentials, ports).
+3.  Update the `.env` file with your specific configurations if needed (e.g., database credentials, ports). If you want to access the frontend from a different host than `localhost`, you also need to set the `VITE_ALLOWED_HOST` variable.
 
 4.  Build and run the application using Docker Compose:
     ```sh
