@@ -6,7 +6,7 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 - [x] **Technologiestack definieren:** Festlegen des Python-Frameworks (FastAPI), der Datenbank (PostgreSQL) und des Frontend-Frameworks (Vue.js 3).
 - [x] **Projektstruktur initialisieren:** Erstellen der grundlegenden Ordnerstruktur und der Docker-Konfiguration.
 - [x] **Backend-Architektur festlegen:** Aufteilung in drei Dienste (Data-Fetcher, KNN-Worker, API-Server) mit WebSocket-Kommunikation.
-- [ ] **Datenquelle identifizieren:** Eine zuverlässige API für die Kursdaten des "MSCI World All Countries" Index finden.
+- [x] **Datenquelle identifizieren:** Eine zuverlässige API für die Kursdaten des "MSCI World All Countries" Index finden.
 - [x] **Datenbank-Schema entwerfen:** Die notwendigen SQL-Tabellen für Aktien, Kurse und Vorhersagen definieren.
 - [x] **Docker-Compose-Setup erweitern:** Die `docker-compose.yml` für die drei Backend-Dienste, Frontend und DB anpassen.
 

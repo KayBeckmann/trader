@@ -1,8 +1,9 @@
 import os
 import time
-import random
 from datetime import datetime
 import pytz
+
+import yfinance as yf
 
 import database
 
@@ -18,7 +19,7 @@ def is_market_open():
     now_utc = datetime.now(pytz.utc)
     if now_utc.weekday() not in MARKET_DAYS_UTC:
         return False  # Market is closed on weekends
-    if MARKET_OPEN_HOUR_UTC <= now_utc.hour < MARKET_CLOSE_HOUR_UTC:
+    if MARKET_OPEN_HOUR_UTC <= now_utc.hour < MARKETET_CLOSE_HOUR_UTC:
         return True
     return False
 
@@ -39,13 +40,27 @@ def get_assets_from_file():
 
 def fetch_price_from_api(symbol):
     """
-    Placeholder function to simulate fetching a price from an API.
-    In a real application, this would make a call to a financial data provider.
+    Fetches a price from Yahoo Finance.
+    If it fails, the symbol is written to 'keineDaten.md'.
     """
-    # Simulate price fluctuation
-    price = random.uniform(100, 500)
-    print(f"Fetched (simulated) price for {symbol}: {price:.2f}")
-    return price
+    price = None
+    try:
+        ticker = yf.Ticker(symbol)
+        history = ticker.history(period="1d")
+        if not history.empty and 'Close' in history and not history['Close'].empty:
+            price = history['Close'][0]
+            print(f"Fetched price for {symbol} from Yahoo Finance: {price:.2f}")
+            return price
+        else:
+            raise ValueError("No data found for symbol in Yahoo Finance")
+    except Exception as e:
+        print(f"Yahoo Finance API failed for {symbol}: {e}.")
+        # If the API fails, write to file
+        with open("keineDaten.md", "a") as f:
+            f.write(f"{symbol}\n")
+        print(f"Could not fetch data for {symbol}. Added to keineDaten.md.")
+        return None
+
 
 def save_price_to_db(conn, symbol, asset_type, price, timestamp):
     """Saves a single price record to the database."""
@@ -93,9 +108,11 @@ def main_loop():
 
                 if fetch:
                     price = fetch_price_from_api(symbol)
-                    unix_timestamp = int(time.time())
-                    save_price_to_db(db_conn, symbol, asset_type, price, unix_timestamp)
-                    db_conn.commit()
+                    if price is not None:
+                        unix_timestamp = int(time.time())
+                        price_float = float(price)
+                        save_price_to_db(db_conn, symbol, asset_type, price_float, unix_timestamp)
+                        db_conn.commit()
 
             except Exception as e:
                 print(f"Error processing {symbol}: {e}")
@@ -112,6 +129,11 @@ def main_loop():
         time.sleep(300) # Wait for 5 minutes
 
 if __name__ == "__main__":
+    # 0. Create the file for symbols with no data if it doesn't exist
+    if not os.path.exists("keineDaten.md"):
+        with open("keineDaten.md", "w") as f:
+            f.write("# Symbols with no data\n")
+            
     # 1. Initialize the database (create tables if they don't exist)
     database.initialize_database()
 
