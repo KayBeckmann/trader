@@ -10,6 +10,9 @@ BACKEND_PORT=8000
 # Frontend Port
 FRONTEND_PORT=5173
 
+# Vite Dev Server
+VITE_ALLOWED_HOST=projekt.beckmann-md.de
+
 # KNN Worker Configuration
 KNN_HIDDEN_LAYERS=2
 KNN_NODES_PER_LAYER=16
