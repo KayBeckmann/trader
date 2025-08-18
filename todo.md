@@ -55,3 +55,6 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 ## Phase 4: Orchestrierung & Deployment
 - [x] **Haupt-Anwendung:** Ein zentrales Skript erstellen, das alle Prozesse (Datenabruf, Analyse, Training) steuert.
 - [x] **Dokumentation:** Die `README.md` mit allen notwendigen Anweisungen für Setup und Betrieb vervollständigen.
+
+## Phase 5: Documentation
+- [x] **Wiki erweitern:** Detaillierte technische Beschreibung für jeden Docker-Container und eine Beschreibung, wie das Frontend vom User benutzt werden kann, hinzufügen.

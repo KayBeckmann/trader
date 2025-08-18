@@ -25,6 +25,64 @@
         <li><strong>Communication:</strong> A <strong>Redis</strong> instance is used as a message broker for communication between the backend services.</li>
       </ul>
     </section>
+
+    <section>
+      <h2>Docker Container Details</h2>
+      <p>The application is composed of several Docker containers that work together. Here is a detailed description of each container:</p>
+      
+      <h4><code>postgres</code></h4>
+      <p>This container runs a PostgreSQL 13 database server. It is used to store all persistent data, including:</p>
+      <ul>
+        <li>Historical stock and crypto prices.</li>
+        <li>Training data for the neural network (virtual long/short positions).</li>
+        <li>Live (virtual) trades and their profit/loss results.</li>
+      </ul>
+      <p>The data is stored in the <code>/data/postgres_data</code> directory on the host machine, which is mounted as a volume to ensure data persistence even if the container is removed.</p>
+
+      <h4><code>redis</code></h4>
+      <p>This container runs a Redis 7 instance. Redis is an in-memory data store used as a message broker for asynchronous communication between the backend services. It ensures that the services are decoupled and can communicate efficiently.</p>
+
+      <h4><code>data-fetcher</code></h4>
+      <p>This Python service is responsible for fetching financial data. It periodically (every 5 minutes) polls the Yahoo Finance API for the latest prices of stocks and cryptocurrencies listed in <code>stocks.txt</code>. The fetched data is then saved to the PostgreSQL database. It also publishes a message to the 'data-fetched' channel in Redis to notify other services that new data is available.</p>
+
+      <h4><code>trainer</code></h4>
+      <p>This Python service listens for messages on the 'data-fetched' Redis channel. When new data arrives, it creates virtual long and short positions for each asset to generate training data for the neural network. These positions are closed based on a set of rules: 10% stop-loss, 10% take-profit, or a 1-hour timeout. The results of these closed positions are stored in the database.</p>
+
+      <h4><code>knn-worker</code></h4>
+      <p>This is the core of the AI functionality. This Python service uses a K-Nearest Neighbors (KNN) based neural network (built from scratch with NumPy) to perform reinforcement learning. It fetches the results of the closed training positions from the database to train the model. After training, it uses the model to predict the top 10 "long" and top 10 "short" assets. These predictions are then published to the 'predictions' channel on Redis.</p>
+
+      <h4><code>trader</code></h4>
+      <p>This Python service subscribes to the 'predictions' Redis channel. When it receives a new list of predictions from the <code>knn-worker</code>, it opens new virtual trades in the database. It manages these trades using the same stop-loss, take-profit, and timeout logic as the <code>trainer</code> service. The results of these trades are used for the profit/loss visualization on the frontend.</p>
+
+      <h4><code>api-server</code></h4>
+      <p>This Python service is a FastAPI web server that acts as the interface between the frontend and the backend. It provides several REST API endpoints for the frontend to fetch initial data (e.g., predictions, trade history, market hours). It also provides a WebSocket endpoint that allows the frontend to receive real-time updates for the predictions as soon as they are published by the <code>knn-worker</code>.</p>
+
+      <h4><code>frontend</code></h4>
+      <p>This container runs a Vue.js 3 development server (Vite). It serves the user interface of the application to the user's browser. It communicates with the <code>api-server</code> to display data and receive real-time updates.</p>
+    </section>
+
+    <section>
+      <h2>Frontend User Guide</h2>
+      <p>The frontend provides a simple interface to view the AI's predictions and the performance of the virtual trades.</p>
+
+      <h4>Market Status</h4>
+      <p>At the top of the page, you can see the current status of the stock market (OPEN or CLOSED). The market hours are displayed in your local timezone.</p>
+
+      <h4>Predictions</h4>
+      <p>The main part of the page is divided into two lists: "Top 10 Long" and "Top 10 Short". These lists are updated in real-time as the AI model generates new predictions. "Long" predictions are stocks that the AI expects to rise in price, while "short" predictions are stocks that are expected to fall.</p>
+
+      <h4>Profit/Loss History</h4>
+      <p>Below the prediction lists, you will find a chart that visualizes the cumulative profit and loss (P/L) of all closed virtual trades over time. This chart gives you an idea of the historical performance of the trading strategy.</p>
+      
+      <h4>How to Add/Change Stocks</h4>
+      <p>The application is configured to track a list of stocks defined in the <code>stocks.txt</code> file at the root of the project. To change the stocks that the AI analyzes, you can edit this file. Each line should contain a stock symbol (as used by Yahoo Finance) followed by a comma and the asset type (`stock` or `crypto`). For example:</p>
+      <code>
+        AAPL,stock<br>
+        GOOG,stock<br>
+        BTC-USD,crypto
+      </code>
+      <p>After saving the file, the <code>data-fetcher</code> service will automatically start tracking the new symbols on its next cycle.</p>
+    </section>
     
     <section>
         <h2>Microservices Communication</h2>
