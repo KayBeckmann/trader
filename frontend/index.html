@@ -2,23 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
+    <link rel="icon" href="/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trader App</title>
-    <script>
-      // Force unregister any old service workers
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          if (registrations.length > 0) {
-            for(let registration of registrations) {
-              registration.unregister();
-            }
-            console.log('Old service worker unregistered. Reloading page...');
-            window.location.reload();
-          }
-        });
-      }
-    </script>
   </head>
   <body>
     <div id="app"></div>
