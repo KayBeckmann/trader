@@ -174,7 +174,8 @@ export default {
 
     // Setup WebSocket connection
     const setupWebSocket = () => {
-      const ws = new WebSocket(`ws://${window.location.host}/ws/predictions`);
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/predictions`);
 
       ws.onmessage = (event) => {
         console.log("WebSocket message received:", event.data);
