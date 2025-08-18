@@ -28,7 +28,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python -u data_fetcher.py
+    command: python -u run.py data-fetcher
     restart: always
     volumes:
       - ./backend:/app
@@ -46,7 +46,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python -u trainer.py
+    command: python -u run.py trainer
     restart: always
     volumes:
       - ./backend:/app
@@ -61,7 +61,7 @@ services:
   api-server:
     container_name: trader_api_server
     build: ./backend
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: python -u run.py api-server
     restart: always
     ports:
       - "${BACKEND_PORT}:8000"
@@ -80,7 +80,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python -u knn_worker.py
+    command: python -u run.py knn-worker
     restart: always
     volumes:
       - ./backend:/app
@@ -97,7 +97,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: python -u trader.py
+    command: python -u run.py trader
     restart: always
     volumes:
       - ./backend:/app
@@ -122,6 +122,8 @@ services:
       - data-fetcher # Will depend on api-server later
     networks:
       - trader_net
+    env_file:
+      - .env
 
 networks:
   trader_net:

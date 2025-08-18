@@ -10,7 +10,7 @@
         <p class="card-text">
           The market is currently <span :class="isMarketOpen ? 'text-success' : 'text-danger'">{{ marketStatus }}</span>.
         </p>
-        <small class="text-muted">Market hours: {{ marketHours.open_hour_utc }}:00 - {{ marketHours.close_hour_utc }}:00 UTC (Mon-Fri)</small>
+        <small class="text-muted">Market hours: {{ localMarketHours }} {{ localTimezone }} (Mon-Fri)</small>
       </div>
     </div>
 
@@ -68,6 +68,26 @@ export default {
     const isMarketOpen = ref(false);
 
     const marketStatus = computed(() => isMarketOpen.value ? 'OPEN' : 'CLOSED');
+
+    const localTimezone = computed(() => {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    });
+
+    const localMarketHours = computed(() => {
+      if (!marketHours.value.open_hour_utc) {
+        return '...';
+      }
+      const openDate = new Date();
+      openDate.setUTCHours(marketHours.value.open_hour_utc, 0, 0, 0);
+      const closeDate = new Date();
+      closeDate.setUTCHours(marketHours.value.close_hour_utc, 0, 0, 0);
+
+      const options = { hour: '2-digit', minute: '2-digit' };
+      const localOpenTime = openDate.toLocaleTimeString([], options);
+      const localCloseTime = closeDate.toLocaleTimeString([], options);
+      
+      return `${localOpenTime} - ${localCloseTime}`;
+    });
 
     // Process trade data for the chart
     const chartData = computed(() => {
@@ -174,7 +194,9 @@ export default {
       marketHours,
       isMarketOpen,
       marketStatus,
-      chartData
+      chartData,
+      localMarketHours,
+      localTimezone
     };
   }
 }

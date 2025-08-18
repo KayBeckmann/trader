@@ -49,9 +49,9 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 - [x] **WebSocket-Client implementieren:** Die Verbindung zum Backend herstellen und auf neue Daten lauschen.
 - [x] **Daten-Anzeige:** Die Top 10 Listen dynamisch auf der Webseite anzeigen und bei Push-Events aktualisieren.
 - [x] **Graphen-Visualisierung:** Den Gewinn/Verlust-Verlauf mit einer Charting-Bibliothek (z.B. Chart.js) visualisieren.
-- [ ] **Zeitzonen-Umrechnung:** Die Börsenöffnungszeiten im Frontend in die lokale Zeitzone des Benutzers umrechnen und anzeigen.
-- [ ] **Wiki-Sektion erstellen:** Einen Bereich für die Dokumentation der Anwendungsfunktionen und -architektur anlegen.
+- [x] **Zeitzonen-Umrechnung:** Die Börsenöffnungszeiten im Frontend in die lokale Zeitzone des Benutzers umrechnen und anzeigen.
+- [x] **Wiki-Sektion erstellen:** Einen Bereich für die Dokumentation der Anwendungsfunktionen und -architektur anlegen.
 
 ## Phase 4: Orchestrierung & Deployment
-- [ ] **Haupt-Anwendung:** Ein zentrales Skript erstellen, das alle Prozesse (Datenabruf, Analyse, Training) steuert.
-- [ ] **Dokumentation:** Die `README.md` mit allen notwendigen Anweisungen für Setup und Betrieb vervollständigen.
+- [x] **Haupt-Anwendung:** Ein zentrales Skript erstellen, das alle Prozesse (Datenabruf, Analyse, Training) steuert.
+- [x] **Dokumentation:** Die `README.md` mit allen notwendigen Anweisungen für Setup und Betrieb vervollständigen.
