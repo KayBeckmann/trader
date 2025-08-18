@@ -17,7 +17,17 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       allowedHosts: [
         env.VITE_ALLOWED_HOST
-      ]
+      ],
+      proxy: {
+        '/api': {
+          target: 'http://api-server:8000',
+          changeOrigin: true,
+        },
+        '/ws': {
+          target: 'ws://api-server:8000',
+          ws: true,
+        }
+      }
     }
   }
 })

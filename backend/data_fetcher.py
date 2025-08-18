@@ -1,6 +1,6 @@
 import os
 import time
-from datetime import datetime
+from datetime import datetime, time
 import pytz
 
 import yfinance as yf
@@ -23,8 +23,8 @@ def is_market_open():
         return False  # Market is closed on weekends
 
     now_time = now_utc.time()
-    open_time = datetime.time(MARKET_OPEN_HOUR_UTC, MARKET_OPEN_MINUTE_UTC)
-    close_time = datetime.time(MARKET_CLOSE_HOUR_UTC, MARKET_CLOSE_MINUTE_UTC)
+    open_time = time(MARKET_OPEN_HOUR_UTC, MARKET_OPEN_MINUTE_UTC)
+    close_time = time(MARKET_CLOSE_HOUR_UTC, MARKET_CLOSE_MINUTE_UTC)
 
     if open_time <= now_time < close_time:
         return True
