@@ -19,7 +19,7 @@ def is_market_open():
     now_utc = datetime.now(pytz.utc)
     if now_utc.weekday() not in MARKET_DAYS_UTC:
         return False  # Market is closed on weekends
-    if MARKET_OPEN_HOUR_UTC <= now_utc.hour < MARKETET_CLOSE_HOUR_UTC:
+    if MARKET_OPEN_HOUR_UTC <= now_utc.hour < MARKET_CLOSE_HOUR_UTC:
         return True
     return False
 
