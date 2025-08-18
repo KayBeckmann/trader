@@ -55,7 +55,7 @@ def get_trades():
     try:
         db_conn = database.get_db_connection()
         with db_conn.cursor() as cur:
-            cur.execute("SELECT symbol, open_price, close_price, profit_loss, status, timestamp FROM trades WHERE status = 'closed'")
+            cur.execute("SELECT symbol, open_price, close_price, profit_loss, status, close_timestamp AS timestamp FROM trades WHERE status = 'closed'")
             trades = cur.fetchall()
             columns = [desc[0] for desc in cur.description]
             return [dict(zip(columns, row)) for row in trades]

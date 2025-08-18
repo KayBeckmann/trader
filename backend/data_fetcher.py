@@ -1,5 +1,5 @@
 import os
-import time
+import time as time_module
 from datetime import datetime, time
 import pytz
 
@@ -117,7 +117,7 @@ def main_loop():
                 if fetch:
                     price = fetch_price_from_api(symbol)
                     if price is not None:
-                        unix_timestamp = int(time.time())
+                        unix_timestamp = int(time_module.time())
                         price_float = float(price)
                         save_price_to_db(db_conn, symbol, asset_type, price_float, unix_timestamp)
                         db_conn.commit()
@@ -134,7 +134,7 @@ def main_loop():
             print(f"Error publishing to Redis: {e}")
 
         print(f"Cycle finished. Waiting for 5 minutes...")
-        time.sleep(300) # Wait for 5 minutes
+        time_module.sleep(300) # Wait for 5 minutes
 
 if __name__ == "__main__":
     # 0. Create the file for symbols with no data if it doesn't exist
