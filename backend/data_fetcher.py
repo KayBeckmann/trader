@@ -8,10 +8,12 @@ import yfinance as yf
 import database
 
 # Define major stock market hours in UTC
-# Example: NYSE 9:30 AM to 4:00 PM EST
-# EST is UTC-5, EDT (daylight saving) is UTC-4. We'll use a simple approximation.
-MARKET_OPEN_HOUR_UTC = 14  # 13:30 UTC -> 9:30 AM EDT
-MARKET_CLOSE_HOUR_UTC = 21 # 20:00 UTC -> 4:00 PM EDT
+# NYSE 9:30 AM to 4:00 PM New York time.
+# In summer (EDT), this is 13:30 to 20:00 UTC.
+MARKET_OPEN_HOUR_UTC = 13
+MARKET_OPEN_MINUTE_UTC = 30
+MARKET_CLOSE_HOUR_UTC = 20
+MARKET_CLOSE_MINUTE_UTC = 0
 MARKET_DAYS_UTC = [0, 1, 2, 3, 4]  # Monday to Friday
 
 def is_market_open():
@@ -19,8 +21,14 @@ def is_market_open():
     now_utc = datetime.now(pytz.utc)
     if now_utc.weekday() not in MARKET_DAYS_UTC:
         return False  # Market is closed on weekends
-    if MARKET_OPEN_HOUR_UTC <= now_utc.hour < MARKET_CLOSE_HOUR_UTC:
+
+    now_time = now_utc.time()
+    open_time = datetime.time(MARKET_OPEN_HOUR_UTC, MARKET_OPEN_MINUTE_UTC)
+    close_time = datetime.time(MARKET_CLOSE_HOUR_UTC, MARKET_CLOSE_MINUTE_UTC)
+
+    if open_time <= now_time < close_time:
         return True
+        
     return False
 
 def get_assets_from_file():

@@ -74,13 +74,13 @@ export default {
     });
 
     const localMarketHours = computed(() => {
-      if (!marketHours.value.open_hour_utc) {
+      if (marketHours.value.open_hour_utc === undefined) {
         return '...';
       }
       const openDate = new Date();
-      openDate.setUTCHours(marketHours.value.open_hour_utc, 0, 0, 0);
+      openDate.setUTCHours(marketHours.value.open_hour_utc, marketHours.value.open_minute_utc, 0, 0);
       const closeDate = new Date();
-      closeDate.setUTCHours(marketHours.value.close_hour_utc, 0, 0, 0);
+      closeDate.setUTCHours(marketHours.value.close_hour_utc, marketHours.value.close_minute_utc, 0, 0);
 
       const options = { hour: '2-digit', minute: '2-digit' };
       const localOpenTime = openDate.toLocaleTimeString([], options);
@@ -144,13 +144,27 @@ export default {
 
     // Check if market is open based on fetched hours
     const checkMarketStatus = () => {
+      if (marketHours.value.open_hour_utc === undefined) {
+          isMarketOpen.value = false;
+          return;
+      }
       const now = new Date();
-      const nowUtc = {
-        day: now.getUTCDay() -1, // Monday is 0 in this logic
-        hour: now.getUTCHours()
-      };
-      if (marketHours.value.market_days_utc.includes(nowUtc.day)) {
-        if (nowUtc.hour >= marketHours.value.open_hour_utc && nowUtc.hour < marketHours.value.close_hour_utc) {
+      const nowDay = now.getUTCDay() === 0 ? 6 : now.getUTCDay() - 1; // Monday is 0 in python
+      
+      if (marketHours.value.market_days_utc.includes(nowDay)) {
+        const nowHour = now.getUTCHours();
+        const nowMinute = now.getUTCMinutes();
+
+        const openHour = marketHours.value.open_hour_utc;
+        const openMinute = marketHours.value.open_minute_utc;
+        const closeHour = marketHours.value.close_hour_utc;
+        const closeMinute = marketHours.value.close_minute_utc;
+
+        const nowTotalMinutes = nowHour * 60 + nowMinute;
+        const openTotalMinutes = openHour * 60 + openMinute;
+        const closeTotalMinutes = closeHour * 60 + closeMinute;
+
+        if (nowTotalMinutes >= openTotalMinutes && nowTotalMinutes < closeTotalMinutes) {
           isMarketOpen.value = true;
           return;
         }

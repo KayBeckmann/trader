@@ -7,8 +7,10 @@ import database
 app = FastAPI()
 
 # Hardcoded market hours (UTC)
-MARKET_OPEN_HOUR_UTC = 14
-MARKET_CLOSE_HOUR_UTC = 21
+MARKET_OPEN_HOUR_UTC = 13
+MARKET_OPEN_MINUTE_UTC = 30
+MARKET_CLOSE_HOUR_UTC = 20
+MARKET_CLOSE_MINUTE_UTC = 0
 MARKET_DAYS_UTC = [0, 1, 2, 3, 4]  # Monday to Friday
 
 def get_redis_connection():
@@ -27,7 +29,9 @@ def get_market_hours():
     """Returns the stock market opening hours in UTC."""
     return {
         "open_hour_utc": MARKET_OPEN_HOUR_UTC,
+        "open_minute_utc": MARKET_OPEN_MINUTE_UTC,
         "close_hour_utc": MARKET_CLOSE_HOUR_UTC,
+        "close_minute_utc": MARKET_CLOSE_MINUTE_UTC,
         "market_days_utc": MARKET_DAYS_UTC,
     }
 

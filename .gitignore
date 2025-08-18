@@ -46,3 +46,6 @@ dist-ssr/
 *.swp
 *~
 .DS_Store
+
+# Generated data files
+backend/keineDaten.md
