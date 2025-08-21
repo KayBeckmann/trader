@@ -58,3 +58,11 @@ Dieses Dokument beschreibt die Schritte zur Entwicklung einer Anwendung für die
 
 ## Phase 5: Documentation
 - [x] **Wiki erweitern:** Detaillierte technische Beschreibung für jeden Docker-Container und eine Beschreibung, wie das Frontend vom User benutzt werden kann, hinzufügen.
+
+## WebSocket Fehleranalyse
+
+Das Hauptproblem ist eine **ungültige WebSocket-URL** (`wss://localhost:undefined/...`), die die Verbindung verhindert. Zusätzlich gibt es **allgemeine Verbindungsfehler** zu `wss://projekt.beckmann-md.de`.
+
+**Nächste Schritte:**
+1.  Überprüfe `client.ts` (Zeile 79) und `HomeView.vue` (Zeile 178), um die Konstruktion der WebSocket-URL zu korrigieren und einen gültigen Host und Port sicherzustellen.
+2.  Stelle sicher, dass der WebSocket-Server unter `projekt.beckmann-md.de` läuft und erreichbar ist.
