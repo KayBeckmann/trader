@@ -10,7 +10,7 @@ import database
 # Define major stock market hours in UTC
 # NYSE 9:30 AM to 4:00 PM New York time.
 # In summer (EDT), this is 13:30 to 20:00 UTC.
-MARKET_OPEN_HOUR_UTC = 13
+MARKET_OPEN_HOUR_UTC = 9
 MARKET_OPEN_MINUTE_UTC = 30
 MARKET_CLOSE_HOUR_UTC = 20
 MARKET_CLOSE_MINUTE_UTC = 0
@@ -56,7 +56,7 @@ def fetch_price_from_api(symbol):
         ticker = yf.Ticker(symbol)
         history = ticker.history(period="1d")
         if not history.empty and 'Close' in history and not history['Close'].empty:
-            price = history['Close'][0]
+            price = history['Close'].iloc[0]
             print(f"Fetched price for {symbol} from Yahoo Finance: {price:.2f}")
             return price
         else:
