@@ -13,7 +13,8 @@ def main():
         "trainer": ["python", "-u", "trainer.py"],
         "knn-worker": ["python", "-u", "knn_worker.py"],
         "trader": ["python", "-u", "trader.py"],
-        "api-server": ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+        "api-server": ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+        "remove-stocks-worker": ["python", "-u", "remove_stocks_worker.py"]
     }
 
     command = commands.get(service)

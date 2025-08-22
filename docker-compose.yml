@@ -109,6 +109,25 @@ services:
     env_file:
       - .env
 
+  remove-stocks-worker:
+    container_name: trader_remove_stocks_worker
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python -u run.py remove-stocks-worker
+    restart: always
+    volumes:
+      - ./backend:/app
+      - ./stocks.txt:/app/stocks.txt
+      - ./keineDaten.md:/app/keineDaten.md
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - trader_net
+    env_file:
+      - .env
+
   frontend:
     container_name: trader_frontend
     build: ./frontend
