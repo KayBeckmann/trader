@@ -23,9 +23,10 @@ export default defineConfig(({ mode }) => {
           target: 'http://api-server:8000',
           changeOrigin: true,
         },
-        '/ws': {
-          target: 'ws://api-server:8000',
+        '/ws/predictions': {
+          target: 'ws://api-server:8000/ws/predictions',
           ws: true,
+          changeOrigin: true,
         }
       }
     }
