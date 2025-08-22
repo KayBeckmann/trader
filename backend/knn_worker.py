@@ -126,13 +126,14 @@ def preprocess_data(db_conn, closed_trades):
                 if len(prices) < 12:
                     continue # Not enough historical data
 
-                prices = np.array([p[0] for p in prices], dtype=float)
+                prices = np.array([float(p[0]) for p in prices])
+                open_price = float(open_price)
                 # Normalize relative to the opening price
                 normalized_prices = (prices - open_price) / open_price
                 features.append(normalized_prices.flatten())
 
                 # 2. Determine label based on profit/loss percentage
-                pnl_percentage = (profit_loss / order_size) * 100
+                pnl_percentage = (float(profit_loss) / float(order_size)) * 100
                 if pnl_percentage > 2:
                     labels.append([1, 0, 0])  # Positive
                 elif pnl_percentage < -2:
@@ -162,7 +163,7 @@ def predict_top_assets(db_conn, model):
                 if len(prices) < 12:
                     continue
 
-                prices = np.array([p[0] for p in prices], dtype=float)
+                prices = np.array([float(p[0]) for p in prices])
                 # Normalize with the most recent price
                 normalized_prices = (prices - prices[0]) / prices[0]
                 
