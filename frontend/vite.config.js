@@ -18,6 +18,11 @@ export default defineConfig(({ mode }) => {
       allowedHosts: [
         env.VITE_ALLOWED_HOST
       ],
+      hmr: {
+        protocol: 'wss',
+        host: 'projekt.beckmann-md.de',
+        port: 443
+      },
       proxy: {
         '/api': {
           target: 'http://api-server:8000',

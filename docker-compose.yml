@@ -136,7 +136,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      - data-fetcher # Will depend on api-server later
+      - api-server
+      - data-fetcher
     networks:
       - trader_net
     env_file:

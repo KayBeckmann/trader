@@ -5,7 +5,8 @@
         <h1 class="mb-0">AI Stock Trader</h1>
         <nav>
           <router-link to="/" class="text-white me-3">Home</router-link>
-          <router-link to="/wiki" class="text-white">Wiki</router-link>
+          <router-link to="/wiki" class="text-white me-3">Wiki</router-link>
+          <router-link to="/metrics" class="text-white">Metrics</router-link>
         </nav>
       </div>
     </header>

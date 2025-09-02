@@ -95,6 +95,7 @@ The backend provides the following API endpoints:
 -   `GET /api/market-hours`: Returns the stock market opening hours in UTC.
 -   `GET /api/predictions`: Returns the latest top 10 long/short predictions from Redis.
 -   `GET /api/trades`: Returns all closed trades from the database for P/L visualization.
+-   `GET /api/metrics`: Returns basic health and counters (DB/Redis status, counts for prices/training/trades, and latest predictions info).
 
 ### WebSocket
 

@@ -10,7 +10,7 @@ import database
 # Define major stock market hours in UTC
 # NYSE 9:30 AM to 4:00 PM New York time.
 # In summer (EDT), this is 13:30 to 20:00 UTC.
-MARKET_OPEN_HOUR_UTC = 9
+MARKET_OPEN_HOUR_UTC = 13
 MARKET_OPEN_MINUTE_UTC = 30
 MARKET_CLOSE_HOUR_UTC = 20
 MARKET_CLOSE_MINUTE_UTC = 0
@@ -48,24 +48,34 @@ def get_assets_from_file():
 
 def fetch_price_from_api(symbol):
     """
-    Fetches a price from Yahoo Finance.
-    If it fails, the symbol is written to 'keineDaten.md'.
+    Fetch the latest price from Yahoo Finance using minute-level data when available.
+    Falls back to coarser intervals. On failure, append the symbol to 'keineDaten.md'.
     """
-    price = None
     try:
         ticker = yf.Ticker(symbol)
-        history = ticker.history(period="1d")
-        if not history.empty and 'Close' in history and not history['Close'].empty:
-            price = history['Close'].iloc[0]
-            print(f"Fetched price for {symbol} from Yahoo Finance: {price:.2f}")
+
+        # Try 1-minute data for the current day
+        history = ticker.history(period="1d", interval="1m")
+        if history is None or history.empty or 'Close' not in history or history['Close'].empty:
+            # Fallback: 5-minute data over 5 days
+            history = ticker.history(period="5d", interval="5m")
+
+        if history is not None and not history.empty and 'Close' in history and not history['Close'].empty:
+            # Use positional index to avoid label-based lookup issues
+            price = float(history['Close'].iloc[-1])
+            print(f"Fetched price for {symbol} from Yahoo Finance: {price:.4f}")
             return price
-        else:
-            raise ValueError("No data found for symbol in Yahoo Finance")
+
+        raise ValueError("No data found for symbol in Yahoo Finance")
+
     except Exception as e:
         print(f"Yahoo Finance API failed for {symbol}: {e}.")
         # If the API fails, write to file
-        with open("keineDaten.md", "a") as f:
-            f.write(f"{symbol}\n")
+        try:
+            with open("keineDaten.md", "a") as f:
+                f.write(f"{symbol}\n")
+        except Exception:
+            pass
         print(f"Could not fetch data for {symbol}. Added to keineDaten.md.")
         return None
 

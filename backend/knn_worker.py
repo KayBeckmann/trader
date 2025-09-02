@@ -126,7 +126,9 @@ def preprocess_data(db_conn, closed_trades):
                 if len(prices) < 12:
                     continue # Not enough historical data
 
-                prices = np.array([float(p[0]) for p in prices])
+                prices = np.array([p[0] for p in prices], dtype=float)
+                # Ensure chronological order (oldest -> newest)
+                prices = prices[::-1]
                 open_price = float(open_price)
                 # Normalize relative to the opening price
                 normalized_prices = (prices - open_price) / open_price
@@ -163,9 +165,11 @@ def predict_top_assets(db_conn, model):
                 if len(prices) < 12:
                     continue
 
-                prices = np.array([float(p[0]) for p in prices])
+                prices = np.array([p[0] for p in prices], dtype=float)
+                # Ensure chronological order (oldest -> newest)
+                prices = prices[::-1]
                 # Normalize with the most recent price
-                normalized_prices = (prices - prices[0]) / prices[0]
+                normalized_prices = (prices - prices[-1]) / prices[-1]
                 
                 prediction = model.forward(normalized_prices.reshape(1, -1))
                 predictions[symbol] = prediction[0]
@@ -213,7 +217,9 @@ def main():
                 if top_long or top_short:
                     prediction_message = json.dumps({'long': top_long, 'short': top_short})
                     try:
-                        redis_conn.set('latest_predictions', prediction_message) # Store the latest predictions
+                        # Store and publish latest predictions with a timestamp for metrics
+                        redis_conn.set('latest_predictions', prediction_message)
+                        redis_conn.set('latest_predictions_ts', int(time.time()))
                         redis_conn.publish('predictions', prediction_message)
                         print(f"Published predictions: {prediction_message}")
                     except Exception as e:
