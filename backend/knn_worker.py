@@ -168,18 +168,43 @@ def predict_top_assets(db_conn, model):
                 prices = np.array([p[0] for p in prices], dtype=float)
                 # Ensure chronological order (oldest -> newest)
                 prices = prices[::-1]
-                # Normalize with the most recent price
-                normalized_prices = (prices - prices[-1]) / prices[-1]
+                # Normalize relative to the first (oldest) price in the window
+                # This better matches training, which normalizes to the opening price
+                base_price = prices[0]
+                if base_price == 0:
+                    continue
+                normalized_prices = (prices - base_price) / base_price
                 
                 prediction = model.forward(normalized_prices.reshape(1, -1))
                 predictions[symbol] = prediction[0]
 
-        # Sort by confidence
-        long_candidates = sorted(predictions.items(), key=lambda item: item[1][0], reverse=True)
-        short_candidates = sorted(predictions.items(), key=lambda item: item[1][2], reverse=True)
+        # Build scores: favor clear directional conviction
+        # long_score = P(Positive) - P(Negative); short_score = P(Negative) - P(Positive)
+        scored = []
+        for sym, probs in predictions.items():
+            pos = float(probs[0])
+            neg = float(probs[2])
+            scored.append((sym, pos - neg, neg - pos))
 
-        top_10_long = [item[0] for item in long_candidates[:10]]
-        top_10_short = [item[0] for item in short_candidates[:10]]
+        # Rank candidates independently
+        long_ranked = sorted(scored, key=lambda x: x[1], reverse=True)
+        short_ranked = sorted(scored, key=lambda x: x[2], reverse=True)
+
+        # Select Top 10 ensuring disjoint sets
+        top_10_long = []
+        top_10_short = []
+
+        for sym, _, _ in long_ranked:
+            if len(top_10_long) >= 10:
+                break
+            top_10_long.append(sym)
+
+        for sym, _, _ in short_ranked:
+            if len(top_10_short) >= 10:
+                break
+            if sym in top_10_long:
+                continue
+            top_10_short.append(sym)
 
         return top_10_long, top_10_short
 
