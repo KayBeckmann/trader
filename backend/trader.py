@@ -4,6 +4,8 @@ import json
 import redis
 import database
 
+TRADE_ORDER_SIZE = float(os.environ.get("TRADE_ORDER_SIZE", "1000"))
+
 def get_redis_connection():
     """Establishes a connection to Redis."""
     return redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
@@ -36,7 +38,7 @@ def open_trades(db_conn, symbols, position_type):
             print(f"Error opening trade for {symbol}: {e}")
             db_conn.rollback()
 
-def add_trade_to_training_data(cur, symbol, pos_type, open_price, open_ts, fee, profit_loss):
+def add_trade_to_training_data(cur, symbol, pos_type, open_price, open_ts, close_price, order_size, fee, profit_loss):
     """Adds a closed trade to the training table."""
     try:
         # 1. Get asset_type from stock_prices table
@@ -47,14 +49,11 @@ def add_trade_to_training_data(cur, symbol, pos_type, open_price, open_ts, fee, 
             return
         asset_type = asset_type_row[0]
 
-        # 2. Define a fixed order_size for now
-        order_size = 1000.00
-
-        # 3. Insert into training table
+        # 2. Insert into training table using the realised close price and P/L
         cur.execute("""
             INSERT INTO training (symbol, asset_type, position_type, open_price, timestamp, order_fee, order_size, status, close_price, close_timestamp, profit_loss)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (symbol, asset_type, pos_type, open_price, open_ts, fee, order_size, 'closed', open_price + (profit_loss / order_size), int(time.time()), profit_loss))
+        """, (symbol, asset_type, pos_type, open_price, open_ts, fee, order_size, 'closed', close_price, int(time.time()), profit_loss))
         print(f"Added closed trade for {symbol} to training data.")
 
     except Exception as e:
@@ -93,7 +92,17 @@ def check_and_close_trades(db_conn):
                     should_close = True
 
                 if should_close:
-                    profit_loss = (current_price - open_price - fee) if pos_type == 'long' else (open_price - current_price - fee)
+                    open_price = float(open_price)
+                    current_price = float(current_price)
+                    fee = float(fee)
+                    quantity = TRADE_ORDER_SIZE / open_price if open_price else 0.0
+
+                    if pos_type == 'long':
+                        gross_pl = (current_price - open_price) * quantity
+                    else:
+                        gross_pl = (open_price - current_price) * quantity
+
+                    profit_loss = gross_pl - fee
                     close_timestamp = int(time.time())
                     cur.execute("""
                         UPDATE trades
@@ -102,7 +111,7 @@ def check_and_close_trades(db_conn):
                     """, (current_price, close_timestamp, profit_loss, trade_id))
                     
                     # Add the closed trade to the training data table
-                    add_trade_to_training_data(cur, symbol, pos_type, open_price, open_ts, fee, profit_loss)
+                    add_trade_to_training_data(cur, symbol, pos_type, open_price, open_ts, current_price, TRADE_ORDER_SIZE, fee, profit_loss)
 
 
             db_conn.commit()

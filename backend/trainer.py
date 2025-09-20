@@ -56,14 +56,17 @@ def check_and_close_training_positions(db_conn):
 
             for pos in open_positions:
                 pos_id, symbol, pos_type, open_price, open_ts, fee, size = pos
-                
+
                 cur.execute("SELECT price FROM stock_prices WHERE symbol = %s ORDER BY timestamp DESC LIMIT 1", (symbol,))
                 current_price_row = cur.fetchone()
                 if not current_price_row:
                     continue
-                
-                current_price = current_price_row[0]
-                
+
+                current_price = float(current_price_row[0])
+                open_price = float(open_price)
+                fee = float(fee)
+                order_size = float(size)
+
                 pnl_percentage = ((current_price - open_price) / open_price) * 100 if pos_type == 'long' else ((open_price - current_price) / open_price) * 100
 
                 # Check for Stop-Loss, Take-Profit, or 1-hour timeout
@@ -79,7 +82,13 @@ def check_and_close_training_positions(db_conn):
                     should_close = True
 
                 if should_close:
-                    profit_loss = (current_price - open_price - fee) if pos_type == 'long' else (open_price - current_price - fee)
+                    quantity = order_size / open_price if open_price else 0.0
+                    if pos_type == 'long':
+                        gross_pl = (current_price - open_price) * quantity
+                    else:
+                        gross_pl = (open_price - current_price) * quantity
+
+                    profit_loss = gross_pl - fee
                     close_timestamp = int(time.time())
                     cur.execute("""
                         UPDATE training
