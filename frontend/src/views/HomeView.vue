@@ -10,7 +10,9 @@
         <p class="card-text">
           The market is currently <span :class="isMarketOpen ? 'text-success' : 'text-danger'">{{ marketStatus }}</span>.
         </p>
-        <small class="text-muted">Market hours: {{ localMarketHours }} {{ localTimezone }} (Mon-Fri)</small>
+        <small class="text-muted">
+          Trading windows ({{ localTimezone }}): {{ localMarketHours }}
+        </small>
       </div>
     </div>
 
@@ -64,7 +66,7 @@ export default {
   setup() {
     const predictions = ref({ long: [], short: [] });
     const trades = ref([]);
-    const marketHours = ref({});
+    const marketHours = ref({ markets: [] });
     const isMarketOpen = ref(false);
 
     const marketStatus = computed(() => isMarketOpen.value ? 'OPEN' : 'CLOSED');
@@ -74,19 +76,23 @@ export default {
     });
 
     const localMarketHours = computed(() => {
-      if (marketHours.value.open_hour_utc === undefined) {
+      const markets = marketHours.value.markets || [];
+      if (!markets.length) {
         return '...';
       }
-      const openDate = new Date();
-      openDate.setUTCHours(marketHours.value.open_hour_utc, marketHours.value.open_minute_utc, 0, 0);
-      const closeDate = new Date();
-      closeDate.setUTCHours(marketHours.value.close_hour_utc, marketHours.value.close_minute_utc, 0, 0);
-
+      const now = new Date();
+      const year = now.getUTCFullYear();
+      const month = now.getUTCMonth();
+      const day = now.getUTCDate();
       const options = { hour: '2-digit', minute: '2-digit' };
-      const localOpenTime = openDate.toLocaleTimeString([], options);
-      const localCloseTime = closeDate.toLocaleTimeString([], options);
-      
-      return `${localOpenTime} - ${localCloseTime}`;
+
+      return markets.map(market => {
+        const openUtc = new Date(Date.UTC(year, month, day, market.open_utc.hour, market.open_utc.minute));
+        const closeUtc = new Date(Date.UTC(year, month, day, market.close_utc.hour, market.close_utc.minute));
+        const openLocal = openUtc.toLocaleTimeString([], options);
+        const closeLocal = closeUtc.toLocaleTimeString([], options);
+        return `${market.name}: ${openLocal} - ${closeLocal}`;
+      }).join(' | ');
     });
 
     // Process trade data for the chart
@@ -144,32 +150,24 @@ export default {
 
     // Check if market is open based on fetched hours
     const checkMarketStatus = () => {
-      if (marketHours.value.open_hour_utc === undefined) {
-          isMarketOpen.value = false;
-          return;
+      const markets = marketHours.value.markets || [];
+      if (!markets.length) {
+        isMarketOpen.value = false;
+        return;
       }
+
       const now = new Date();
-      const nowDay = now.getUTCDay() === 0 ? 6 : now.getUTCDay() - 1; // Monday is 0 in python
-      
-      if (marketHours.value.market_days_utc.includes(nowDay)) {
-        const nowHour = now.getUTCHours();
-        const nowMinute = now.getUTCMinutes();
+      const nowDay = now.getUTCDay() === 0 ? 6 : now.getUTCDay() - 1; // Align with Python weekday()
+      const nowTotalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
 
-        const openHour = marketHours.value.open_hour_utc;
-        const openMinute = marketHours.value.open_minute_utc;
-        const closeHour = marketHours.value.close_hour_utc;
-        const closeMinute = marketHours.value.close_minute_utc;
-
-        const nowTotalMinutes = nowHour * 60 + nowMinute;
-        const openTotalMinutes = openHour * 60 + openMinute;
-        const closeTotalMinutes = closeHour * 60 + closeMinute;
-
-        if (nowTotalMinutes >= openTotalMinutes && nowTotalMinutes < closeTotalMinutes) {
-          isMarketOpen.value = true;
-          return;
+      isMarketOpen.value = markets.some(market => {
+        if (!market.days.includes(nowDay)) {
+          return false;
         }
-      }
-      isMarketOpen.value = false;
+        const openTotalMinutes = market.open_utc.hour * 60 + market.open_utc.minute;
+        const closeTotalMinutes = market.close_utc.hour * 60 + market.close_utc.minute;
+        return nowTotalMinutes >= openTotalMinutes && nowTotalMinutes < closeTotalMinutes;
+      });
     };
 
     // Setup WebSocket connection

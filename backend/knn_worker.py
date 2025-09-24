@@ -237,18 +237,19 @@ def main():
                 nn.train(X, y, epochs=1000, learning_rate=0.01)
                 print("Training finished.")
 
-                # After training, make new predictions
-                top_long, top_short = predict_top_assets(db_conn, nn)
-                if top_long or top_short:
-                    prediction_message = json.dumps({'long': top_long, 'short': top_short})
-                    try:
-                        # Store and publish latest predictions with a timestamp for metrics
-                        redis_conn.set('latest_predictions', prediction_message)
-                        redis_conn.set('latest_predictions_ts', int(time.time()))
-                        redis_conn.publish('predictions', prediction_message)
-                        print(f"Published predictions: {prediction_message}")
-                    except Exception as e:
-                        print(f"Error publishing predictions: {e}")
+        else:
+            print("No new training data available.")
+
+        # Always refresh predictions to keep downstream services up-to-date
+        top_long, top_short = predict_top_assets(db_conn, nn)
+        prediction_message = json.dumps({'long': top_long, 'short': top_short})
+        try:
+            redis_conn.set('latest_predictions', prediction_message)
+            redis_conn.set('latest_predictions_ts', int(time.time()))
+            redis_conn.publish('predictions', prediction_message)
+            print(f"Published predictions: {prediction_message}")
+        except Exception as e:
+            print(f"Error publishing predictions: {e}")
 
         print("Waiting for 5 minutes before next cycle...")
         time.sleep(300)

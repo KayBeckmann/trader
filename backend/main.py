@@ -4,15 +4,65 @@ import json
 import asyncio
 import database
 from datetime import datetime, time
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:  # pragma: no cover - Python < 3.9 fallback
+    from backports.zoneinfo import ZoneInfo
 
 app = FastAPI()
 
-# Hardcoded market hours (UTC)
-MARKET_OPEN_HOUR_UTC = 13
-MARKET_OPEN_MINUTE_UTC = 30
-MARKET_CLOSE_HOUR_UTC = 20
-MARKET_CLOSE_MINUTE_UTC = 0
-MARKET_DAYS_UTC = [0, 1, 2, 3, 4]  # Monday to Friday
+# Trading sessions we support; hours are expressed in the local market timezone
+MARKETS = [
+    {
+        "name": "Frankfurt",
+        "timezone": "Europe/Berlin",
+        "open_time": time(9, 0),
+        "close_time": time(17, 30),
+        "days": [0, 1, 2, 3, 4],  # Monday -> 0
+    },
+    {
+        "name": "New York",
+        "timezone": "America/New_York",
+        "open_time": time(9, 30),
+        "close_time": time(16, 0),
+        "days": [0, 1, 2, 3, 4],
+    },
+]
+
+UTC_ZONE = ZoneInfo("UTC")
+
+
+def _market_window_today(market):
+    """Return today's open/close timestamps for a market in both local and UTC."""
+    tz = ZoneInfo(market["timezone"])
+    now_local = datetime.now(tz)
+    open_dt_local = datetime.combine(now_local.date(), market["open_time"], tzinfo=tz)
+    close_dt_local = datetime.combine(now_local.date(), market["close_time"], tzinfo=tz)
+
+    open_dt_utc = open_dt_local.astimezone(UTC_ZONE)
+    close_dt_utc = close_dt_local.astimezone(UTC_ZONE)
+
+    return {
+        "name": market["name"],
+        "timezone": market["timezone"],
+        "days": market["days"],
+        "open_local": {
+            "hour": market["open_time"].hour,
+            "minute": market["open_time"].minute,
+        },
+        "close_local": {
+            "hour": market["close_time"].hour,
+            "minute": market["close_time"].minute,
+        },
+        "open_utc": {
+            "hour": open_dt_utc.hour,
+            "minute": open_dt_utc.minute,
+        },
+        "close_utc": {
+            "hour": close_dt_utc.hour,
+            "minute": close_dt_utc.minute,
+        },
+    }
 
 def get_redis_connection():
     """Establishes a connection to Redis."""
@@ -27,13 +77,9 @@ def read_root():
 
 @app.get("/api/market-hours")
 def get_market_hours():
-    """Returns the stock market opening hours in UTC."""
+    """Returns the trading sessions we monitor for automated operation."""
     return {
-        "open_hour_utc": MARKET_OPEN_HOUR_UTC,
-        "open_minute_utc": MARKET_OPEN_MINUTE_UTC,
-        "close_hour_utc": MARKET_CLOSE_HOUR_UTC,
-        "close_minute_utc": MARKET_CLOSE_MINUTE_UTC,
-        "market_days_utc": MARKET_DAYS_UTC,
+        "markets": [_market_window_today(market) for market in MARKETS],
     }
 
 @app.get("/api/predictions")
@@ -50,13 +96,18 @@ def get_predictions():
         return {"error": str(e)}
 
 def is_market_open_now():
-    """Determine if the market is currently open based on UTC time and configured days/hours."""
-    now = datetime.utcnow()
-    if now.weekday() not in MARKET_DAYS_UTC:
-        return False
-    open_t = time(MARKET_OPEN_HOUR_UTC, MARKET_OPEN_MINUTE_UTC)
-    close_t = time(MARKET_CLOSE_HOUR_UTC, MARKET_CLOSE_MINUTE_UTC)
-    return open_t <= now.time() < close_t
+    """Return True if any supported market session is currently running."""
+    now_utc = datetime.now(UTC_ZONE)
+    for market in MARKETS:
+        tz = ZoneInfo(market["timezone"])
+        now_local = now_utc.astimezone(tz)
+        if now_local.weekday() not in market["days"]:
+            continue
+        open_time = market["open_time"]
+        close_time = market["close_time"]
+        if open_time <= now_local.time() < close_time:
+            return True
+    return False
 
 @app.get("/api/metrics")
 def get_metrics():

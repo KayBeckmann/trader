@@ -5,3 +5,4 @@ numpy
 yfinance
 fastapi
 uvicorn
+backports.zoneinfo; python_version < "3.9"
