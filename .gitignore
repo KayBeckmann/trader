@@ -1,52 +1,20 @@
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-instance/
-.pytest_cache/
-.mypy_cache/
-.tox/
+env/
+venv/
 
-# Node / Vue
-node_modules/
-dist/
-dist-ssr/
-*.local
+# Docker
+.env
 
-# Project Data
-/data/
+# Celery
+celerybeat-schedule
 
-# IDE / OS
-.idea/
-.vscode/
-*.swp
-*~
+# Logs
+*.log
+
+# OS generated files
 .DS_Store
-
-# Generated data files
-backend/keineDaten.md
-*.old

@@ -36,6 +36,32 @@ services:
       - redis
     restart: unless-stopped
 
+  worker:
+    build: ./backend
+    container_name: trader_worker
+    command: celery -A app.worker.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  beat:
+    build: ./backend
+    container_name: trader_beat
+    command: celery -A app.worker.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
     container_name: trader_frontend
