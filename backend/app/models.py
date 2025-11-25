@@ -29,3 +29,13 @@ class Trade(Base):
     result = Column(Integer) # 1 for win, -1 for loss, 0 for neutral
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     closed_at = Column(DateTime)
+
+class KNNResult(Base):
+    __tablename__ = "knn_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String, index=True)
+    type = Column(Enum('long', 'short', name='knn_result_type'), nullable=False)
+    rank = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+

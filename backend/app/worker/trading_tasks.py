@@ -1,7 +1,7 @@
 from app.worker.celery_app import celery_app
 from app.database import SessionLocal
-from app.models import StockPrice, Trade
-from sqlalchemy import func
+from app.models import StockPrice, Trade, KNNResult
+from sqlalchemy import func, desc
 import datetime
 
 @celery_app.task
@@ -100,6 +100,63 @@ def evaluate_trades():
             trade.exit_price = current_price
             trade.closed_at = datetime.datetime.utcnow()
             print(f"Trade {trade.id} ({trade.symbol} {trade.type}) closed due to time limit.")
+
+    db.commit()
+    db.close()
+
+@celery_app.task
+def create_knn_trades():
+    db = SessionLocal()
+    latest_timestamp = db.query(KNNResult.created_at).order_by(desc(KNNResult.created_at)).first()
+    if not latest_timestamp:
+        print("No KNN results found to create trades.")
+        db.close()
+        return
+
+    latest_timestamp = latest_timestamp[0]
+
+    top_results = (
+        db.query(KNNResult)
+        .filter(KNNResult.created_at == latest_timestamp)
+        .order_by(KNNResult.rank)
+        .limit(20)
+        .all()
+    )
+
+    if not top_results:
+        print("No top KNN results found to create trades.")
+        db.close()
+        return
+
+    symbols = {r.symbol for r in top_results}
+    
+    latest_prices_subquery = db.query(
+        StockPrice.symbol,
+        func.max(StockPrice.timestamp).label('max_timestamp')
+    ).filter(StockPrice.symbol.in_(symbols)).group_by(StockPrice.symbol).subquery()
+
+    latest_prices = db.query(StockPrice).join(
+        latest_prices_subquery,
+        (StockPrice.symbol == latest_prices_subquery.c.symbol) &
+        (StockPrice.timestamp == latest_prices_subquery.c.max_timestamp)
+    ).all()
+
+    latest_prices_dict = {p.symbol: p.price for p in latest_prices}
+
+    for result in top_results:
+        current_price = latest_prices_dict.get(result.symbol)
+        if not current_price:
+            print(f"Could not find current price for {result.symbol}. Skipping trade creation.")
+            continue
+
+        trade = Trade(
+            symbol=result.symbol,
+            type=result.type,
+            entry_price=current_price,
+            status='open'
+        )
+        db.add(trade)
+        print(f"Opened {result.type} trade for {result.symbol} at {current_price}")
 
     db.commit()
     db.close()
