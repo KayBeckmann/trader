@@ -7,13 +7,20 @@ celery_app = Celery(
     "tasks",
     broker=REDIS_URL,
     backend=REDIS_URL,
-    include=["app.worker.tasks"]
+    include=["app.worker.tasks", "app.worker.trading_tasks"]
 )
 
-celery_app.conf.beat_schedule = {
-    'fetch-stock-data-every-5-minutes': {
-        'task': 'app.worker.tasks.fetch_and_store_stock_data',
-        'schedule': 300.0,  # 5 minutes in seconds
+celery_app.conf.update(
+    beat_schedule={
+        'fetch-and-open-every-5-minutes': {
+            'task': 'app.worker.tasks.fetch_and_store_stock_data',
+            'schedule': 300.0,
+            'options': {'link': 'app.worker.trading_tasks.open_trades'}
+        },
+        'evaluate-trades-every-5-minutes': {
+            'task': 'app.worker.trading_tasks.evaluate_trades',
+            'schedule': 300.0,
+        },
     },
-}
-celery_app.conf.timezone = 'UTC'
+    timezone='UTC'
+)

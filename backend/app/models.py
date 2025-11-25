@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, Enum
 from .database import Base
 import datetime
 
@@ -16,3 +16,16 @@ class SymbolFailure(Base):
     symbol = Column(String, primary_key=True, index=True)
     failure_count = Column(Integer, default=0)
     last_attempt = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+class Trade(Base):
+    __tablename__ = "trades"
+
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String, index=True)
+    type = Column(Enum('long', 'short', name='trade_type'), nullable=False)
+    entry_price = Column(Float, nullable=False)
+    exit_price = Column(Float)
+    status = Column(Enum('open', 'closed', name='trade_status'), default='open', nullable=False)
+    result = Column(Integer) # 1 for win, -1 for loss, 0 for neutral
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    closed_at = Column(DateTime)

@@ -1,4 +1,4 @@
-from .celery_app import celery_app
+from app.worker.celery_app import celery_app
 from app.database import SessionLocal
 from app.models import StockPrice, SymbolFailure
 import yfinance as yf
