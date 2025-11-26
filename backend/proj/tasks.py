@@ -3,6 +3,10 @@ from .app.database import SessionLocal
 from .app.models import StockPrice, SymbolFailure
 import yfinance as yf
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def get_stock_symbols():
     # In docker, the CWD is /app
@@ -23,7 +27,7 @@ def fetch_and_store_stock_data():
     db = SessionLocal()
     all_symbols = get_stock_symbols()
     if not all_symbols:
-        print("No symbols found in stocks.txt")
+        logger.warning("No symbols found in stocks.txt")
         db.close()
         return "No symbols found in stocks.txt"
 
@@ -33,7 +37,7 @@ def fetch_and_store_stock_data():
     
     symbols_to_fetch = [s for s in all_symbols if s not in blocked_symbol_set]
 
-    print(f"Fetching data for {len(symbols_to_fetch)} of {len(all_symbols)} total symbols...")
+    logger.info(f"Fetching data for {len(symbols_to_fetch)} of {len(all_symbols)} total symbols...")
     for symbol in symbols_to_fetch:
         try:
             ticker = yf.Ticker(symbol)
@@ -42,7 +46,7 @@ def fetch_and_store_stock_data():
                 price = hist['Close'].iloc[-1]
                 stock_price = StockPrice(symbol=symbol, price=price)
                 db.add(stock_price)
-                print(f"Fetched {symbol}: {price}")
+                logger.info(f"Fetched {symbol}: {price}")
 
                 # On success, reset failure count if it exists
                 failure_record = db.query(SymbolFailure).filter(SymbolFailure.symbol == symbol).first()
@@ -52,7 +56,7 @@ def fetch_and_store_stock_data():
                 raise ValueError(f"No history data found for {symbol}")
 
         except Exception as e:
-            print(f"Could not fetch data for {symbol}: {e}")
+            logger.error(f"Could not fetch data for {symbol}: {e}")
             
             # On failure, increment failure count
             failure_record = db.query(SymbolFailure).filter(SymbolFailure.symbol == symbol).first()
@@ -63,9 +67,9 @@ def fetch_and_store_stock_data():
                 failure_record = SymbolFailure(symbol=symbol, failure_count=1)
                 db.add(failure_record)
             
-            print(f"Failure count for {symbol} is now {failure_record.failure_count}")
+            logger.warning(f"Failure count for {symbol} is now {failure_record.failure_count}")
 
     db.commit()
+    logger.info("Finished fetching stock data and committed to database.")
     db.close()
-    print("Finished fetching stock data.")
     return f"Attempted to store prices for {len(symbols_to_fetch)} symbols."
