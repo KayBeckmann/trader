@@ -11,25 +11,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     restart: unless-stopped
 
   redis:
     image: redis:7
     container_name: trader_redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     restart: unless-stopped
 
   backend:
-    build: 
+    build:
       context: ./backend
     container_name: trader_backend
     command: uvicorn proj.app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./backend:/app
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     env_file:
       - ./.env
     depends_on:
@@ -69,7 +69,9 @@ services:
     build: ./frontend
     container_name: trader_frontend
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      - VITE_ALLOWED_HOSTS=${VITE_ALLOWED_HOSTS:-localhost}
     volumes:
       - ./frontend:/app
       - /app/node_modules
