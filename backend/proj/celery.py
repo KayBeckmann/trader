@@ -11,21 +11,35 @@ app.conf.update(
 )
 
 app.conf.beat_schedule = {
+    # Fetch stock data every minute
     'fetch-stock-data-every-minute': {
         'task': 'proj.tasks.fetch_and_store_stock_data',
         'schedule': crontab(minute='*'),
     },
-    'generate-dummy-knn-results-every-minute': {
-        'task': 'proj.trading_tasks.generate_dummy_knn_results',
+    # Open training trades (virtual positions) every 5 minutes
+    'open-training-trades-every-5-minutes': {
+        'task': 'proj.trading_tasks.open_trades',
+        'schedule': crontab(minute='*/5'),
+    },
+    # Generate KNN predictions every minute
+    'generate-knn-predictions-every-minute': {
+        'task': 'proj.trading_tasks.generate_knn_predictions',
         'schedule': crontab(minute='*'),
     },
+    # Create trades based on KNN predictions every minute
     'create-knn-trades-every-minute': {
         'task': 'proj.trading_tasks.create_knn_trades',
         'schedule': crontab(minute='*'),
     },
+    # Evaluate trades every 30 seconds
     'evaluate-trades-every-30-seconds': {
         'task': 'proj.trading_tasks.evaluate_trades',
         'schedule': 30.0,
+    },
+    # Remove failed stocks daily at midnight
+    'remove-failed-stocks-daily': {
+        'task': 'proj.trading_tasks.remove_failed_stocks',
+        'schedule': crontab(hour=0, minute=0),
     },
 }
 

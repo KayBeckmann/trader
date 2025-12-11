@@ -20,23 +20,24 @@ The application is composed of several Docker containers that work together. Her
 #### `redis`
 <p>This container runs a Redis 7 instance. Redis is an in-memory data store used as a message broker for asynchronous communication between the backend services. It ensures that the services are decoupled and can communicate efficiently.</p>
 
-#### `data-fetcher`
-<p>This Python service is responsible for fetching financial data. It periodically (every 5 minutes) polls the Yahoo Finance API for the latest prices of stocks and cryptocurrencies listed in <code>stocks.txt</code>. The fetched data is then saved to the PostgreSQL database. It also publishes a message to the 'data-fetched' channel in Redis to notify other services that new data is available.</p>
+#### `backend`
+<p>This Python service provides the FastAPI web server that acts as the interface between the frontend and the backend. It provides REST API endpoints for the frontend to fetch data (predictions, trade history, market hours, metrics) and a WebSocket endpoint for real-time prediction updates.</p>
 
-#### `trainer`
-<p>This Python service listens for messages on the 'data-fetched' Redis channel. When new data arrives, it creates virtual long and short positions for each asset to generate training data for the neural network. These positions are closed based on a set of rules: 10% stop-loss, 10% take-profit, or a 1-hour timeout. The results of these closed positions are stored in the database.</p>
+#### `worker`
+<p>This Celery worker handles background tasks including:</p>
+<ul>
+  <li><strong>Data Fetching:</strong> Periodically polls Yahoo Finance API for stock/crypto prices.</li>
+  <li><strong>Training:</strong> Creates virtual long and short positions for each asset to generate training data. Positions are closed based on 10% stop-loss, 10% take-profit, or 1-hour timeout.</li>
+  <li><strong>KNN Predictions:</strong> Uses a neural network (built from scratch with NumPy) to train on closed positions and generate top 10 long/short predictions.</li>
+  <li><strong>Trading:</strong> Opens virtual trades based on predictions and manages them using stop-loss/take-profit logic.</li>
+  <li><strong>Cleanup:</strong> Removes stocks with repeated data fetch failures from the tracking list.</li>
+</ul>
 
-#### `knn-worker`
-<p>This is the core of the AI functionality. This Python service uses a K-Nearest Neighbors (KNN) based neural network (built from scratch with NumPy) to perform reinforcement learning. It fetches the results of the closed training positions from the database to train the model. After training, it uses the model to predict the top 10 "long" and top 10 "short" assets. These predictions are then published to the 'predictions' channel on Redis.</p>
-
-#### `trader`
-<p>This Python service subscribes to the 'predictions' Redis channel. When it receives a new list of predictions from the <code>knn-worker</code>, it opens new virtual trades in the database. It manages these trades using the same stop-loss, take-profit, and timeout logic as the <code>trainer</code> service. The results of these trades are used for the profit/loss visualization on the frontend.</p>
-
-#### `api-server`
-<p>This Python service is a FastAPI web server that acts as the interface between the frontend and the backend. It provides several REST API endpoints for the frontend to fetch initial data (e.g., predictions, trade history, market hours). It also provides a WebSocket endpoint that allows the frontend to receive real-time updates for the predictions as soon as they are published by the <code>knn-worker</code>.</p>
+#### `beat`
+<p>This Celery beat scheduler triggers the worker tasks at configured intervals.</p>
 
 #### `frontend`
-<p>This container runs a Vue.js 3 development server (Vite). It serves the user interface of the application to the user's browser. It communicates with the <code>api-server</code> to display data and receive real-time updates.</p>
+<p>This container runs a Vue.js 3 development server (Vite). It serves the user interface of the application to the user's browser. It communicates with the <code>backend</code> via REST API and WebSocket for real-time updates.</p>
 
 ## Getting Started
 
@@ -49,7 +50,7 @@ To get the project running on your local machine, you will need Docker and Docke
     ```
 2.  Create a local environment file from the example:
     ```sh
-    cp env-exmample .env
+    cp env-example .env
     ```
 3.  Update the `.env` file with your specific configurations if needed (see Configuration section below).
 
@@ -67,7 +68,9 @@ To add or change the stocks that are being tracked, edit the `stocks.txt` file. 
 AAPL,stock
 BTC-USD,crypto
 ```
-The `data-fetcher` service will automatically pick up the changes.
+The worker service will automatically pick up the changes.
+
+**Note:** Stocks that fail to return data 3 times in a row will be automatically removed from tracking by the cleanup task.
 
 ## Configuration
 
@@ -92,14 +95,37 @@ The backend provides the following API endpoints:
 
 ### REST API
 
--   `GET /api/market-hours`: Returns the stock market opening hours in UTC.
--   `GET /api/predictions`: Returns the latest top 10 long/short predictions from Redis.
+-   `GET /api/knn/top`: Returns the latest top 10 long/short predictions.
 -   `GET /api/trades`: Returns all closed trades from the database for P/L visualization.
--   `GET /api/metrics`: Returns basic health and counters (DB/Redis status, counts for prices/training/trades, and latest predictions info).
+-   `GET /api/market-hours`: Returns the stock market opening hours in UTC.
+-   `GET /api/metrics`: Returns basic health and counters (DB/Redis status, counts for prices/training/trades, win rate, and latest predictions info).
+-   `GET /api/health`: Simple health check endpoint.
 
 ### WebSocket
 
--   `ws:///ws/predictions`: A WebSocket endpoint that pushes new predictions to connected clients in real-time. The messages are JSON strings with the format `{"long": [...], "short": [...]}`.
+-   `ws://<host>/ws/predictions`: A WebSocket endpoint that pushes new predictions to connected clients in real-time. The messages are JSON strings with the format `{"long": [...], "short": [...]}`.
+
+## Architecture
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Frontend  │────▶│   Backend   │────▶│  PostgreSQL │
+│   (Vue.js)  │◀────│  (FastAPI)  │◀────│             │
+└─────────────┘     └─────────────┘     └─────────────┘
+                           │
+                           │ WebSocket
+                           │
+                    ┌──────┴──────┐
+                    │    Redis    │
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+        ┌─────┴─────┐ ┌────┴────┐ ┌─────┴─────┐
+        │  Worker   │ │  Beat   │ │  Worker   │
+        │  (Celery) │ │(Celery) │ │  (Celery) │
+        └───────────┘ └─────────┘ └───────────┘
+```
 
 ## License
 
