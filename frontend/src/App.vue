@@ -1,21 +1,26 @@
 <template>
   <div id="app">
     <h1>Trader Dashboard</h1>
+    <div class="connection-status" :class="connectionStatus">
+      {{ connectionStatusText }}
+    </div>
     <div class="container">
       <div class="knn-lists">
         <div class="knn-list">
           <h2>Top 10 Long</h2>
           <ul>
-            <li v-for="item in topLong" :key="item.id">
+            <li v-for="item in topLong" :key="item.id || item.symbol">
               {{ item.rank }}. {{ item.symbol }}
+              <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
             </li>
           </ul>
         </div>
         <div class="knn-list">
           <h2>Top 10 Short</h2>
           <ul>
-            <li v-for="item in topShort" :key="item.id">
+            <li v-for="item in topShort" :key="item.id || item.symbol">
               {{ item.rank }}. {{ item.symbol }}
+              <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
             </li>
           </ul>
         </div>
@@ -29,7 +34,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 import { Line } from 'vue-chartjs';
 import {
@@ -77,11 +82,36 @@ const chartOptions = ref({
   },
 });
 
+// WebSocket connection state
+const wsConnected = ref(false);
+const wsReconnecting = ref(false);
+let ws = null;
+let reconnectTimeout = null;
+let heartbeatInterval = null;
+
+const connectionStatus = computed(() => {
+  if (wsConnected.value) return 'connected';
+  if (wsReconnecting.value) return 'reconnecting';
+  return 'disconnected';
+});
+
+const connectionStatusText = computed(() => {
+  if (wsConnected.value) return 'Live';
+  if (wsReconnecting.value) return 'Reconnecting...';
+  return 'Disconnected';
+});
+
 const fetchTopKnnResults = async () => {
   try {
     const response = await axios.get('/api/knn/top');
-    topLong.value = response.data.long;
-    topShort.value = response.data.short;
+    topLong.value = response.data.long.map((item, index) => ({
+      ...item,
+      rank: item.rank || index + 1
+    }));
+    topShort.value = response.data.short.map((item, index) => ({
+      ...item,
+      rank: item.rank || index + 1
+    }));
   } catch (error) {
     console.error('Error fetching KNN results:', error);
   }
@@ -110,13 +140,114 @@ const fetchTradeHistory = async () => {
   }
 };
 
+const connectWebSocket = () => {
+  // Determine WebSocket URL based on current location
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/predictions`;
+
+  try {
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      wsConnected.value = true;
+      wsReconnecting.value = false;
+
+      // Start heartbeat
+      heartbeatInterval = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send('ping');
+        }
+      }, 25000);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // Ignore heartbeat messages
+        if (data.type === 'heartbeat') return;
+
+        // Update predictions if we received valid data
+        if (data.long && data.short) {
+          topLong.value = data.long.map((item, index) => ({
+            symbol: item.symbol,
+            score: item.score,
+            rank: index + 1
+          }));
+          topShort.value = data.short.map((item, index) => ({
+            symbol: item.symbol,
+            score: item.score,
+            rank: index + 1
+          }));
+          console.log('Received real-time predictions update');
+        }
+      } catch (e) {
+        // Not JSON, might be a pong response
+        if (event.data !== 'pong') {
+          console.log('Received non-JSON message:', event.data);
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      wsConnected.value = false;
+      clearInterval(heartbeatInterval);
+
+      // Attempt to reconnect after 5 seconds
+      wsReconnecting.value = true;
+      reconnectTimeout = setTimeout(() => {
+        console.log('Attempting to reconnect...');
+        connectWebSocket();
+      }, 5000);
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+  } catch (error) {
+    console.error('Failed to create WebSocket connection:', error);
+    wsReconnecting.value = true;
+    reconnectTimeout = setTimeout(connectWebSocket, 5000);
+  }
+};
+
+const disconnectWebSocket = () => {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+};
+
 onMounted(() => {
+  // Initial data fetch
   fetchTopKnnResults();
   fetchTradeHistory();
+
+  // Connect WebSocket for real-time updates
+  connectWebSocket();
+
+  // Fallback polling for trade history (less frequent since WebSocket handles predictions)
   setInterval(() => {
-    fetchTopKnnResults();
     fetchTradeHistory();
-  }, 60000); // Refresh every minute
+    // Also fetch KNN results as fallback if WebSocket is disconnected
+    if (!wsConnected.value) {
+      fetchTopKnnResults();
+    }
+  }, 60000);
+});
+
+onUnmounted(() => {
+  disconnectWebSocket();
 });
 </script>
 
@@ -128,6 +259,31 @@ onMounted(() => {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.connection-status {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.connection-status.connected {
+  background-color: #4caf50;
+  color: white;
+}
+
+.connection-status.reconnecting {
+  background-color: #ff9800;
+  color: white;
+}
+
+.connection-status.disconnected {
+  background-color: #f44336;
+  color: white;
 }
 
 .container {
@@ -147,6 +303,25 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.knn-list ul {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+}
+
+.knn-list li {
+  padding: 8px 12px;
+  margin: 4px 0;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.knn-list li .score {
+  float: right;
+  color: #666;
+  font-size: 0.9em;
 }
 
 .chart-container {
