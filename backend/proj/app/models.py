@@ -37,5 +37,6 @@ class KNNResult(Base):
     symbol = Column(String, index=True)
     type = Column(Enum('long', 'short', name='knn_result_type'), nullable=False)
     rank = Column(Integer, nullable=False)
+    score = Column(Float, nullable=True)  # Confidence score from ML model
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 

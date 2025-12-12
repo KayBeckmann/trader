@@ -1,9 +1,30 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from sqlalchemy import text
+import logging
 
 from .database import engine
 from . import models
 from .api import knn, trades, market, metrics, websocket
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def run_migrations():
+    """Run database migrations for schema updates."""
+    with engine.connect() as conn:
+        # Check if score column exists in knn_results table
+        result = conn.execute(text("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'knn_results' AND column_name = 'score'
+        """))
+        if not result.fetchone():
+            logger.info("Adding 'score' column to knn_results table...")
+            conn.execute(text("ALTER TABLE knn_results ADD COLUMN score FLOAT"))
+            conn.commit()
+            logger.info("Migration complete: added 'score' column")
 
 
 @asynccontextmanager
@@ -17,6 +38,7 @@ async def lifespan(app: FastAPI):
 
 
 models.Base.metadata.create_all(bind=engine)
+run_migrations()
 
 app = FastAPI(title="Trader API", lifespan=lifespan)
 

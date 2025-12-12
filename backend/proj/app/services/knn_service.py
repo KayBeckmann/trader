@@ -173,10 +173,10 @@ class KNNService:
         Returns:
             Dict with 'long' and 'short' lists of symbols with scores
         """
-        # Get all unique symbols with recent prices
+        # Get all unique symbols with recent prices (extended to 24 hours for reliability)
         recent_symbols = (
             self.db.query(StockPrice.symbol)
-            .filter(StockPrice.timestamp >= datetime.utcnow() - timedelta(hours=1))
+            .filter(StockPrice.timestamp >= datetime.utcnow() - timedelta(hours=24))
             .distinct()
             .all()
         )
@@ -184,8 +184,8 @@ class KNNService:
         symbols = [s[0] for s in recent_symbols]
 
         if not symbols:
-            logger.warning("No recent symbols found")
-            return {'long': [], 'short': []}
+            logger.warning("No recent symbols found, using fallback predictions")
+            return self._generate_fallback_predictions([])
 
         # If model not trained, train it first
         if self.model is None:
@@ -223,15 +223,45 @@ class KNNService:
             'short': [{'symbol': p['symbol'], 'score': p['short_score']} for p in top_short]
         }
 
+    def _get_symbols_from_file(self) -> list:
+        """Load symbols from stocks.txt file."""
+        file_path = '/app/stocks.txt'
+        if not os.path.exists(file_path):
+            return []
+
+        symbols = []
+        try:
+            with open(file_path, 'r') as f:
+                for line in f:
+                    if line.strip():
+                        symbol = line.strip().split(',')[0]
+                        symbols.append(symbol)
+        except Exception as e:
+            logger.error(f"Error reading stocks.txt: {e}")
+        return symbols
+
     def _generate_fallback_predictions(self, symbols: list) -> dict:
         """Generate random predictions when model is not available."""
         import random
+
+        # If no symbols provided, try to load from file
+        if not symbols:
+            symbols = self._get_symbols_from_file()
+            logger.info(f"Loaded {len(symbols)} symbols from stocks.txt for fallback predictions")
+
+        if not symbols:
+            logger.warning("No symbols available for fallback predictions")
+            return {'long': [], 'short': []}
+
         random.shuffle(symbols)
         top_symbols = symbols[:20]
 
+        long_predictions = [{'symbol': s, 'score': 0.5 + random.random() * 0.3} for s in top_symbols[:10]]
+        short_predictions = [{'symbol': s, 'score': 0.5 + random.random() * 0.3} for s in top_symbols[10:20]] if len(top_symbols) > 10 else []
+
         return {
-            'long': [{'symbol': s, 'score': random.random()} for s in top_symbols[:10]],
-            'short': [{'symbol': s, 'score': random.random()} for s in top_symbols[10:20] if len(top_symbols) > 10]
+            'long': long_predictions,
+            'short': short_predictions
         }
 
     def save_predictions_to_db(self, predictions: dict):
@@ -243,7 +273,8 @@ class KNNService:
             result = KNNResult(
                 symbol=pred['symbol'],
                 type='long',
-                rank=rank
+                rank=rank,
+                score=pred.get('score')
             )
             self.db.add(result)
 
@@ -251,7 +282,8 @@ class KNNService:
             result = KNNResult(
                 symbol=pred['symbol'],
                 type='short',
-                rank=rank
+                rank=rank,
+                score=pred.get('score')
             )
             self.db.add(result)
 
