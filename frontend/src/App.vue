@@ -8,26 +8,40 @@
       <div class="knn-lists">
         <div class="knn-list">
           <h2>Top 10 Long</h2>
-          <ul>
+          <ul v-if="topLong.length > 0">
             <li v-for="item in topLong" :key="item.id || item.symbol">
               {{ item.rank }}. {{ item.symbol }}
               <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
             </li>
           </ul>
+          <div v-else class="no-data">
+            <p>{{ dataLoading ? 'Loading...' : 'No predictions available' }}</p>
+            <small v-if="!dataLoading">System needs time to collect data and train the model.</small>
+          </div>
         </div>
         <div class="knn-list">
           <h2>Top 10 Short</h2>
-          <ul>
+          <ul v-if="topShort.length > 0">
             <li v-for="item in topShort" :key="item.id || item.symbol">
               {{ item.rank }}. {{ item.symbol }}
               <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
             </li>
           </ul>
+          <div v-else class="no-data">
+            <p>{{ dataLoading ? 'Loading...' : 'No predictions available' }}</p>
+            <small v-if="!dataLoading">System needs time to collect data and train the model.</small>
+          </div>
         </div>
       </div>
       <div class="chart-container">
         <h2>Trade History</h2>
-        <Line :data="chartData" :options="chartOptions" />
+        <div v-if="hasTradeData" class="chart-wrapper">
+          <Line :data="chartData" :options="chartOptions" />
+        </div>
+        <div v-else class="no-data chart-no-data">
+          <p>{{ tradesLoading ? 'Loading trade history...' : 'No trade history available' }}</p>
+          <small v-if="!tradesLoading">Trades will appear here after positions are closed (typically after 1 hour or when profit/loss targets are reached).</small>
+        </div>
       </div>
     </div>
   </div>
@@ -63,6 +77,8 @@ ChartJS.register(
 
 const topLong = ref([]);
 const topShort = ref([]);
+const dataLoading = ref(true);
+const tradesLoading = ref(true);
 const chartData = ref({
   datasets: [],
 });
@@ -114,6 +130,8 @@ const fetchTopKnnResults = async () => {
     }));
   } catch (error) {
     console.error('Error fetching KNN results:', error);
+  } finally {
+    dataLoading.value = false;
   }
 };
 
@@ -121,7 +139,9 @@ const fetchTradeHistory = async () => {
   try {
     const response = await axios.get('/api/trades');
     const trades = response.data;
-    const profitAndLoss = trades.map(trade => ({
+    // Filter out trades without closed_at date
+    const closedTrades = trades.filter(trade => trade.closed_at);
+    const profitAndLoss = closedTrades.map(trade => ({
       x: new Date(trade.closed_at),
       y: (trade.exit_price - trade.entry_price) * (trade.type === 'long' ? 1 : -1),
     }));
@@ -131,14 +151,23 @@ const fetchTradeHistory = async () => {
         {
           label: 'Profit/Loss',
           backgroundColor: '#f87979',
+          borderColor: '#f87979',
           data: profitAndLoss,
         },
       ],
     };
   } catch (error) {
     console.error('Error fetching trade history:', error);
+  } finally {
+    tradesLoading.value = false;
   }
 };
+
+const hasTradeData = computed(() => {
+  return chartData.value.datasets.length > 0 &&
+         chartData.value.datasets[0].data &&
+         chartData.value.datasets[0].data.length > 0;
+});
 
 const connectWebSocket = () => {
   // Determine WebSocket URL based on current location
@@ -326,5 +355,37 @@ onUnmounted(() => {
 
 .chart-container {
   height: 400px;
+}
+
+.chart-wrapper {
+  height: 350px;
+}
+
+.no-data {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px dashed #ddd;
+}
+
+.no-data p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #888;
+}
+
+.no-data small {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.chart-no-data {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 </style>
