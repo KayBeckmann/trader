@@ -4,12 +4,27 @@
     <div class="connection-status" :class="connectionStatus">
       {{ connectionStatusText }}
     </div>
+    <div class="sort-controls">
+      <label>Sortierung:</label>
+      <button
+        @click="sortByRating = false"
+        :class="{ active: !sortByRating }"
+        class="sort-button">
+        Nach Rang
+      </button>
+      <button
+        @click="sortByRating = true"
+        :class="{ active: sortByRating }"
+        class="sort-button">
+        Nach Rating
+      </button>
+    </div>
     <div class="container">
       <div class="knn-lists">
         <div class="knn-list">
           <h2>Top 10 Long</h2>
-          <ul v-if="topLong.length > 0">
-            <li v-for="item in topLong" :key="item.id || item.symbol">
+          <ul v-if="sortedTopLong.length > 0">
+            <li v-for="item in sortedTopLong" :key="item.id || item.symbol">
               {{ item.rank }}. {{ item.symbol }}
               <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
             </li>
@@ -21,8 +36,8 @@
         </div>
         <div class="knn-list">
           <h2>Top 10 Short</h2>
-          <ul v-if="topShort.length > 0">
-            <li v-for="item in topShort" :key="item.id || item.symbol">
+          <ul v-if="sortedTopShort.length > 0">
+            <li v-for="item in sortedTopShort" :key="item.id || item.symbol">
               {{ item.rank }}. {{ item.symbol }}
               <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
             </li>
@@ -79,6 +94,7 @@ const topLong = ref([]);
 const topShort = ref([]);
 const dataLoading = ref(true);
 const tradesLoading = ref(true);
+const sortByRating = ref(false); // false = sort by rank, true = sort by rating
 const chartData = ref({
   datasets: [],
 });
@@ -115,6 +131,25 @@ const connectionStatusText = computed(() => {
   if (wsConnected.value) return 'Live';
   if (wsReconnecting.value) return 'Reconnecting...';
   return 'Disconnected';
+});
+
+// Sorted lists based on sort preference
+const sortedTopLong = computed(() => {
+  if (!topLong.value || topLong.value.length === 0) return [];
+  const sorted = [...topLong.value];
+  if (sortByRating.value) {
+    return sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
+  }
+  return sorted.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+});
+
+const sortedTopShort = computed(() => {
+  if (!topShort.value || topShort.value.length === 0) return [];
+  const sorted = [...topShort.value];
+  if (sortByRating.value) {
+    return sorted.sort((a, b) => (b.score || 0) - (a.score || 0));
+  }
+  return sorted.sort((a, b) => (a.rank || 0) - (b.rank || 0));
 });
 
 const fetchTopKnnResults = async () => {
@@ -387,5 +422,47 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sort-controls label {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.sort-button {
+  padding: 8px 16px;
+  border: 2px solid #ddd;
+  background-color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.sort-button:hover {
+  border-color: #42b983;
+  color: #42b983;
+}
+
+.sort-button.active {
+  background-color: #42b983;
+  border-color: #42b983;
+  color: white;
+  font-weight: bold;
 }
 </style>
