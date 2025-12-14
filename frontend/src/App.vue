@@ -23,10 +23,19 @@
       <div class="knn-lists">
         <div class="knn-list">
           <h2>Top 10 Long</h2>
-          <ul v-if="sortedTopLong.length > 0">
-            <li v-for="item in sortedTopLong" :key="item.id || item.symbol">
-              {{ item.rank }}. {{ item.symbol }}
-              <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
+          <ul v-if="topLong.length > 0">
+            <li v-for="item in topLong" :key="item.id || item.symbol">
+              <div class="stock-info">
+                <div class="stock-main">
+                  <span class="stock-rank">{{ item.rank }}.</span>
+                  <span class="stock-symbol">{{ item.symbol }}</span>
+                  <span v-if="item.name" class="stock-name">{{ item.name }}</span>
+                </div>
+                <div class="stock-details">
+                  <span v-if="item.isin" class="stock-isin">ISIN: {{ item.isin }}</span>
+                  <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
+                </div>
+              </div>
             </li>
           </ul>
           <div v-else class="no-data">
@@ -36,10 +45,19 @@
         </div>
         <div class="knn-list">
           <h2>Top 10 Short</h2>
-          <ul v-if="sortedTopShort.length > 0">
-            <li v-for="item in sortedTopShort" :key="item.id || item.symbol">
-              {{ item.rank }}. {{ item.symbol }}
-              <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
+          <ul v-if="topShort.length > 0">
+            <li v-for="item in topShort" :key="item.id || item.symbol">
+              <div class="stock-info">
+                <div class="stock-main">
+                  <span class="stock-rank">{{ item.rank }}.</span>
+                  <span class="stock-symbol">{{ item.symbol }}</span>
+                  <span v-if="item.name" class="stock-name">{{ item.name }}</span>
+                </div>
+                <div class="stock-details">
+                  <span v-if="item.isin" class="stock-isin">ISIN: {{ item.isin }}</span>
+                  <span v-if="item.score" class="score">({{ (item.score * 100).toFixed(1) }}%)</span>
+                </div>
+              </div>
             </li>
           </ul>
           <div v-else class="no-data">
@@ -72,10 +90,12 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   TimeScale,
+  Filler,
 } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 
@@ -84,10 +104,12 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
-  TimeScale
+  TimeScale,
+  Filler
 );
 
 const topLong = ref([]);
@@ -101,17 +123,53 @@ const chartData = ref({
 const chartOptions = ref({
   responsive: true,
   maintainAspectRatio: false,
+  interaction: {
+    mode: 'index',
+    intersect: false,
+  },
   scales: {
     x: {
       type: 'time',
       time: {
         unit: 'hour',
+        displayFormats: {
+          hour: 'MMM d, HH:mm'
+        }
       },
+      title: {
+        display: true,
+        text: 'Time'
+      }
     },
     y: {
       beginAtZero: true,
+      title: {
+        display: true,
+        text: 'P&L ($)'
+      }
     },
   },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        afterTitle: function(context) {
+          const dataPoint = context[0].raw;
+          if (dataPoint && dataPoint.symbol) {
+            return `${dataPoint.symbol} (${dataPoint.type})`;
+          }
+          return '';
+        },
+        label: function(context) {
+          const value = context.parsed.y;
+          const sign = value >= 0 ? '+' : '';
+          return `${context.dataset.label}: ${sign}$${value.toFixed(2)}`;
+        }
+      }
+    },
+    legend: {
+      position: 'top',
+    }
+  }
 });
 
 // WebSocket connection state
@@ -174,20 +232,50 @@ const fetchTradeHistory = async () => {
   try {
     const response = await axios.get('/api/trades');
     const trades = response.data;
-    // Filter out trades without closed_at date
-    const closedTrades = trades.filter(trade => trade.closed_at);
-    const profitAndLoss = closedTrades.map(trade => ({
+    // Filter out trades without closed_at date and sort by date
+    const closedTrades = trades
+      .filter(trade => trade.closed_at)
+      .sort((a, b) => new Date(a.closed_at) - new Date(b.closed_at));
+
+    // Calculate cumulative P&L
+    let cumulativePnL = 0;
+    const cumulativeData = closedTrades.map(trade => {
+      const tradePnL = (trade.exit_price - trade.entry_price) * (trade.type === 'long' ? 1 : -1);
+      cumulativePnL += tradePnL;
+      return {
+        x: new Date(trade.closed_at),
+        y: cumulativePnL,
+        symbol: trade.symbol,
+        type: trade.type,
+        pnl: tradePnL
+      };
+    });
+
+    // Also prepare individual trade P&L data
+    const individualPnL = closedTrades.map(trade => ({
       x: new Date(trade.closed_at),
       y: (trade.exit_price - trade.entry_price) * (trade.type === 'long' ? 1 : -1),
+      symbol: trade.symbol,
+      type: trade.type
     }));
 
     chartData.value = {
       datasets: [
         {
-          label: 'Profit/Loss',
-          backgroundColor: '#f87979',
-          borderColor: '#f87979',
-          data: profitAndLoss,
+          label: 'Cumulative P&L',
+          backgroundColor: 'rgba(33, 150, 243, 0.2)',
+          borderColor: '#2196F3',
+          fill: true,
+          tension: 0.1,
+          data: cumulativeData,
+        },
+        {
+          label: 'Per Trade P&L',
+          backgroundColor: individualPnL.map(d => d.y >= 0 ? 'rgba(76, 175, 80, 0.7)' : 'rgba(244, 67, 54, 0.7)'),
+          borderColor: individualPnL.map(d => d.y >= 0 ? '#4CAF50' : '#F44336'),
+          type: 'bar',
+          data: individualPnL,
+          barThickness: 8,
         },
       ],
     };
@@ -237,12 +325,18 @@ const connectWebSocket = () => {
           topLong.value = data.long.map((item, index) => ({
             symbol: item.symbol,
             score: item.score,
-            rank: index + 1
+            rank: index + 1,
+            name: item.name,
+            isin: item.isin,
+            wkn: item.wkn
           }));
           topShort.value = data.short.map((item, index) => ({
             symbol: item.symbol,
             score: item.score,
-            rank: index + 1
+            rank: index + 1,
+            name: item.name,
+            isin: item.isin,
+            wkn: item.wkn
           }));
           console.log('Received real-time predictions update');
         }
@@ -382,8 +476,52 @@ onUnmounted(() => {
   border-radius: 4px;
 }
 
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stock-main {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stock-rank {
+  font-weight: bold;
+  color: #333;
+  min-width: 20px;
+}
+
+.stock-symbol {
+  font-weight: bold;
+  color: #2196F3;
+}
+
+.stock-name {
+  color: #666;
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.stock-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85em;
+  padding-left: 26px;
+}
+
+.stock-isin {
+  color: #888;
+  font-family: monospace;
+}
+
 .knn-list li .score {
-  float: right;
   color: #666;
   font-size: 0.9em;
 }

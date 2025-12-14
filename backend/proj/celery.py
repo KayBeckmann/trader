@@ -41,6 +41,11 @@ app.conf.beat_schedule = {
         'task': 'proj.trading_tasks.remove_failed_stocks',
         'schedule': crontab(hour=0, minute=0),
     },
+    # Fetch stock metadata hourly (name, ISIN, etc.)
+    'fetch-stock-metadata-hourly': {
+        'task': 'proj.tasks.fetch_stock_metadata',
+        'schedule': crontab(minute=0),  # Every hour at minute 0
+    },
 }
 
 if __name__ == '__main__':
