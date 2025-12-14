@@ -1,6 +1,6 @@
 from .celery import app
 from .app.database import SessionLocal
-from .app.models import StockPrice, SymbolFailure
+from .app.models import StockPrice, SymbolFailure, StockMetadata
 import yfinance as yf
 import os
 import logging
@@ -73,3 +73,58 @@ def fetch_and_store_stock_data():
     logger.info("Finished fetching stock data and committed to database.")
     db.close()
     return f"Attempted to store prices for {len(symbols_to_fetch)} symbols."
+
+
+@app.task
+def fetch_stock_metadata():
+    """Fetch and store stock metadata (name, ISIN) from yfinance."""
+    db = SessionLocal()
+    all_symbols = get_stock_symbols()
+    if not all_symbols:
+        logger.warning("No symbols found in stocks.txt for metadata fetch")
+        db.close()
+        return "No symbols found"
+
+    # Get symbols that don't have metadata yet
+    existing_metadata = db.query(StockMetadata.symbol).all()
+    existing_symbols = {m.symbol for m in existing_metadata}
+    symbols_to_fetch = [s for s in all_symbols if s not in existing_symbols]
+
+    if not symbols_to_fetch:
+        logger.info("All symbols already have metadata")
+        db.close()
+        return "All symbols already have metadata"
+
+    logger.info(f"Fetching metadata for {len(symbols_to_fetch)} symbols...")
+    for symbol in symbols_to_fetch:
+        try:
+            ticker = yf.Ticker(symbol)
+            info = ticker.info
+
+            name = info.get('longName') or info.get('shortName') or symbol
+            isin = info.get('isin')
+
+            metadata = StockMetadata(
+                symbol=symbol,
+                name=name,
+                isin=isin,
+                wkn=None  # WKN not available from yfinance
+            )
+            db.add(metadata)
+            logger.info(f"Fetched metadata for {symbol}: {name}")
+
+        except Exception as e:
+            logger.error(f"Could not fetch metadata for {symbol}: {e}")
+            # Create minimal metadata entry to avoid repeated failures
+            metadata = StockMetadata(
+                symbol=symbol,
+                name=symbol,
+                isin=None,
+                wkn=None
+            )
+            db.add(metadata)
+
+    db.commit()
+    logger.info("Finished fetching stock metadata.")
+    db.close()
+    return f"Fetched metadata for {len(symbols_to_fetch)} symbols."

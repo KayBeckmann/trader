@@ -40,3 +40,13 @@ class KNNResult(Base):
     score = Column(Float, nullable=True)  # Confidence score from ML model
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+
+class StockMetadata(Base):
+    __tablename__ = "stock_metadata"
+
+    symbol = Column(String, primary_key=True, index=True)
+    name = Column(String, nullable=True)  # Company name
+    isin = Column(String, nullable=True)  # ISIN identifier
+    wkn = Column(String, nullable=True)  # WKN (German securities ID)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
