@@ -29,6 +29,17 @@ CREATE TABLE IF NOT EXISTS trades (
 CREATE INDEX IF NOT EXISTS idx_trades_aktie ON trades (aktie);
 CREATE INDEX IF NOT EXISTS idx_trades_eroeffnet_at ON trades (eroeffnet_at DESC);
 
+-- Tabelle: empfehlungen (KNN-Ausgabe je Takt)
+CREATE TABLE IF NOT EXISTS empfehlungen (
+    id        BIGSERIAL PRIMARY KEY,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    aktie     VARCHAR(20) NOT NULL,
+    richtung  VARCHAR(5)  NOT NULL CHECK (richtung IN ('long', 'short')),
+    knn_wert  NUMERIC(8, 6) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_empfehlungen_timestamp ON empfehlungen (timestamp DESC);
+
 -- Aggregierte View: statistik
 CREATE OR REPLACE VIEW statistik AS
 SELECT

@@ -14,6 +14,8 @@ Ausgabewerte je Aktie:
   -1  → starkes Short-Signal
 """
 
+import os
+
 import torch
 import torch.nn as nn
 
@@ -23,11 +25,17 @@ INPUT_SIZE = N_TICKERS * N_FEATURES  # 270
 OUTPUT_SIZE = N_TICKERS              # 90
 
 
+def _default_hidden() -> list[int]:
+    """Liest KNN_HIDDEN_LAYERS aus der Umgebung (z. B. '256,128')."""
+    raw = os.environ.get("KNN_HIDDEN_LAYERS", "256,128")
+    return [int(x.strip()) for x in raw.split(",") if x.strip()]
+
+
 class TraderNet(nn.Module):
     def __init__(self, hidden_sizes: list[int] | None = None) -> None:
         super().__init__()
         if hidden_sizes is None:
-            hidden_sizes = [256, 128]
+            hidden_sizes = _default_hidden()
 
         layers: list[nn.Module] = []
         in_size = INPUT_SIZE

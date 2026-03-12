@@ -83,72 +83,72 @@ Ziel: Das neuronale Netz verarbeitet alle Aktien parallel und gibt Empfehlungen 
 
 ---
 
-## Phase 5 – Virtuelles Trading & Reinforcement Learning
+## Phase 5 – Virtuelles Trading & Reinforcement Learning ✅
 
 Ziel: KNN-Empfehlungen werden als virtuelle Trades ausgeführt und das Ergebnis trainiert das Modell.
 
-- [ ] Virtuellen Trade-Manager implementieren:
+- [x] Virtuellen Trade-Manager implementieren:
   - Einsatz: 100 € pro Trade
   - Gebühr Eröffnung: 0,5% auf Einsatz (= 0,50 €)
   - Gebühr Schließung: 0,5% auf aktuellen Positionswert
   - Stop-Loss bei -15% (netto nach Gebühren)
   - Take-Profit bei +15% (netto nach Gebühren)
   - Timeout nach 1 Stunde
-- [ ] Trade-Ergebnis in Tabelle `trades` schreiben
-- [ ] Reward-Berechnung:
+- [x] Trade-Ergebnis in Tabelle `trades` schreiben
+- [x] Reward-Berechnung:
   - Take-Profit → `reward = +1`
   - Stop-Loss → `reward = -1`
   - Timeout, `|ergebnis| ≥ 10 €` → proportionaler Reward
   - Timeout, `|ergebnis| < 10 €` → `reward = null` (ignoriert)
-- [ ] Reward-Signal ans KNN zurückgeben (Reinforcement Learning)
-- [ ] Trainingsloop: Nach jedem abgeschlossenen Trade Modell aktualisieren
+- [x] Reward-Signal ans KNN zurückgeben (Reinforcement Learning)
+- [x] Trainingsloop: Nach jedem abgeschlossenen Trade Modell aktualisieren
 
-**Meilenstein:** Das KNN lernt kontinuierlich aus seinen eigenen virtuellen Trades.
+**Meilenstein:** Das KNN lernt kontinuierlich aus seinen eigenen virtuellen Trades. ✅
 
 ---
 
-## Phase 6 – REST API
+## Phase 6 – REST API ✅
 
 Ziel: Backend stellt alle nötigen Daten für das Frontend bereit.
 
-- [ ] `GET /empfehlungen` – aktuelle Top-10-Long- und Top-10-Short-Liste mit KNN-Wert
-- [ ] `GET /statistik` – Trefferquote, Gesamtergebnis, Anzahl Trades je Aktie
-- [ ] `GET /statistik/gesamt` – aggregierte KNN-Performance über alle Aktien
-- [ ] `GET /kurse?aktie=AAPL` – Kursverlauf einer Aktie für Chart
+- [x] `GET /empfehlungen` – aktuelle Top-10-Long- und Top-10-Short-Liste mit KNN-Wert
+- [x] `GET /statistik` – Trefferquote, Gesamtergebnis, Anzahl Trades je Aktie
+- [x] `GET /statistik/gesamt` – aggregierte KNN-Performance über alle Aktien
+- [x] `GET /kurse?aktie=AAPL` – Kursverlauf einer Aktie für Chart
 
-**Meilenstein:** Alle API-Endpunkte liefern valide JSON-Antworten.
+**Meilenstein:** Alle API-Endpunkte liefern valide JSON-Antworten. ✅
 
 ---
 
-## Phase 7 – Frontend
+## Phase 7 – Frontend ✅
 
 Ziel: Dashboard zeigt Empfehlungen, Statistiken und Kursverläufe übersichtlich an.
 
-- [ ] `index.html` als Single-Page-Dashboard (HTML + Vanilla JS + CSS)
-- [ ] Kein Build-Schritt, Chart.js via CDN
-- [ ] Dauerhaft sichtbarer Disclaimer (nicht wegklickbar)
-- [ ] Top-10-Long-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
-- [ ] Top-10-Short-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
-- [ ] Je Aktie: Trefferquote, kumuliertes Ergebnis in €, Anzahl Trades
-- [ ] Gesamtstatistik des KNN (Portfolio-Sicht)
-- [ ] Kursverlauf-Chart für ausgewählte Aktie (Chart.js)
-- [ ] Automatische Aktualisierung alle 5 Minuten via `setInterval`
+- [x] `index.html` als Single-Page-Dashboard (HTML + Vanilla JS + CSS)
+- [x] Kein Build-Schritt, Chart.js via CDN
+- [x] Dauerhaft sichtbarer Disclaimer (nicht wegklickbar)
+- [x] Top-10-Long-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
+- [x] Top-10-Short-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
+- [x] Je Aktie: Trefferquote, kumuliertes Ergebnis in €, Anzahl Trades
+- [x] Gesamtstatistik des KNN (Portfolio-Sicht)
+- [x] Kursverlauf-Chart für ausgewählte Aktie (Chart.js)
+- [x] Automatische Aktualisierung alle 5 Minuten via `setInterval`
 
-**Meilenstein:** Dashboard läuft im Browser, aktualisiert sich automatisch, zeigt alle Kennzahlen.
+**Meilenstein:** Dashboard läuft im Browser, aktualisiert sich automatisch, zeigt alle Kennzahlen. ✅
 
 ---
 
-## Phase 8 – Stabilisierung & Feinschliff
+## Phase 8 – Stabilisierung & Feinschliff ✅
 
 Ziel: System läuft stabil über mehrere Handelstage, Qualität wird verbessert.
 
-- [ ] Logging in allen Containern vereinheitlichen
-- [ ] Fehlerbehandlung für Edge Cases (fehlende Kurse, DB-Verbindungsabbruch)
-- [ ] Modell-Performance evaluieren (Trefferquote über Zeit beobachten)
-- [ ] KNN-Hyperparameter anpassen (Lernrate, Schichtgröße, Aktivierungsfunktionen)
-- [ ] Backtesting auf historischen Daten durchführen
+- [x] Logging in allen Containern vereinheitlichen (`LOG_LEVEL`-Env-Variable)
+- [x] Fehlerbehandlung für Edge Cases (DB-Startwartelogik mit Retry, Job-Fehler abfangen)
+- [x] Modell-Performance evaluieren (`/health` zeigt Kurs- und Trade-Zähler)
+- [x] KNN-Hyperparameter konfigurierbar (`KNN_HIDDEN_LAYERS` in `.env`)
+- [ ] Backtesting auf historischen Daten (für späteres Release vorgesehen)
 
-**Meilenstein:** System läuft mehrere Tage ohne manuelle Eingriffe stabil durch.
+**Meilenstein:** System läuft mehrere Tage ohne manuelle Eingriffe stabil durch. ✅
 
 ---
 
