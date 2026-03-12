@@ -54,7 +54,11 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 
 ### Virtuelles Trading & Reinforcement Learning
 - [ ] Jede KNN-Empfehlung wird automatisch als virtueller Trade ausgeführt
-- [ ] Handelsgebühr: **0,5% pro Trade** (Ein- und Ausstieg je 0,5%, also 1% gesamt)
+- [ ] Handelsgebühren realistisch erfassen:
+  - Eröffnung: **0,5%** auf den Einsatz (wird sofort vom Kapital abgezogen)
+  - Schließung: **0,5%** auf den aktuellen Positionswert zum Schlusszeitpunkt
+  - Gesamtgebühr variiert je nach Kursentwicklung (nicht fix 1%)
+  - Gebühren mindern das Ergebnis – Stop-Loss und Take-Profit beziehen sich auf den Nettoertrag nach Gebühren
 - [ ] Virtuelles Kapital pro Trade: **100 €**
 - [ ] Stop-Loss bei **-15%** (inkl. Gebühren) → Trade wird automatisch geschlossen
 - [ ] Take-Profit bei **+15%** (inkl. Gebühren) → Trade wird automatisch geschlossen
@@ -74,7 +78,8 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
   - `geschlossen_at` – Zeitpunkt der Schließung
   - `schliessgrund` – `stop_loss`, `take_profit` oder `timeout`
   - `einsatz_eur` – virtueller Einsatz (100 €)
-  - `gebuehr_eur` – berechnete Gebühr in €
+  - `gebuehr_eroeffnung_eur` – Gebühr beim Eröffnen (0,5% auf Einsatz)
+  - `gebuehr_schliessung_eur` – Gebühr beim Schließen (0,5% auf Positionswert)
   - `ergebnis_eur` – absolutes Ergebnis in € nach Gebühren
   - `reward` – Reward-Signal (`-1` bis `+1`, oder `null` wenn ignoriert)
 - [ ] Tabelle `statistik` oder aggregierte View je Aktie:
@@ -122,7 +127,6 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - Soll `timestamp` als ein Feld gespeichert werden oder getrennt als `datum` + `uhrzeit`?
 - Welche SQL-Datenbank? (SQLite für Entwicklung, PostgreSQL für Produktion)
 - Wie groß soll das rollende Fenster für die Min-Max-Normalisierung sein? (z.B. 24h, 7 Tage)
-- Werden Gebühren nur beim Schließen berechnet oder auch beim Eröffnen? (Empfehlung: beide, je 0,5%)
 
 ---
 
