@@ -133,6 +133,10 @@ TSM, ASML, NVO, SAP, TTE, SHEL, SNY, AZN, RIO, UL
 - [ ] Kursverläufe mit Chart.js visualisieren (via CDN, kein npm)
 - [ ] Automatische Aktualisierung alle 5 Minuten (z.B. via `setInterval`)
 - [ ] Nutzer entscheidet selbst, ob und wie er handelt (kein automatischer Handel)
+- [ ] Dauerhaft sichtbarer Disclaimer auf jeder Seite:
+  > **Dieses Projekt ist ein reines Schulungs- und Forschungsprojekt.**
+  > Die angezeigten Informationen stellen **keine Anlageberatung** dar.
+  > Alle Signale sind experimentell und dienen ausschließlich Lernzwecken.
 
 ---
 
