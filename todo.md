@@ -29,7 +29,7 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
   - Kurs unverändert → `0`
   - Kurs gefallen → negativer Wert, max. `-1`
   - Kurs gestiegen → positiver Wert, max. `+1`
-- [ ] Normalisierung auf den Bereich `[-1, 1]` (z.B. via tanh oder Min-Max-Skalierung)
+- [ ] Normalisierung auf den Bereich `[-1, 1]` via **Min-Max-Skalierung** über ein rollendes Zeitfenster
 - [ ] Drei Zeitfenster pro Aktie berechnen:
   - `delta_5m` – Veränderung der letzten 5 Minuten
   - `delta_20m` – Veränderung der letzten 20 Minuten
@@ -46,10 +46,13 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
     - `+1` → Long-Signal
 - [ ] Alle Aktien werden **parallel** durch dasselbe Netz verarbeitet (kein sequenzieller Loop)
 - [ ] Aktivierungsfunktion am Ausgang: `tanh` (liefert nativ `[-1, 1]`)
-- [ ] Schwellwert definieren: ab welchem Ausgabewert wird tatsächlich gehandelt? (z.B. `|x| > 0.5`)
+- [ ] KNN trifft **keine** automatischen Handelsentscheidungen
+- [ ] Ausgabewerte werden nach Stärke sortiert und als Empfehlungsliste weitergereicht:
+  - Top 10 Long-Kandidaten (höchste positive Werte, nahe `+1`)
+  - Top 10 Short-Kandidaten (stärkste negative Werte, nahe `-1`)
 - [ ] Trainingsdaten aufbereiten (historische Kurse + bekannte Folgebewegungen als Label)
 - [ ] Modell trainieren und evaluieren
-- [ ] Virtuelle Long- und Short-Trades zur Modellvalidierung
+- [ ] Virtuelle Long- und Short-Trades zur Modellvalidierung (Backtesting)
 
 ### Backend
 - [ ] REST API für Kursabfragen (z.B. `/kurse?aktie=AAPL&von=...&bis=...`)
@@ -57,10 +60,12 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - [ ] Datenquelle anbinden (API-Key-Verwaltung, Rate-Limit beachten)
 
 ### Frontend
-- [ ] Dashboard mit Gewinn/Verlust-Übersicht
-- [ ] Top 10 Long-Kandidaten anzeigen
-- [ ] Top 10 Short-Kandidaten anzeigen
-- [ ] Kursverläufe visualisieren
+- [ ] Dashboard als Hauptansicht
+- [ ] Top 10 Long-Kandidaten anzeigen mit KNN-Ausgabewert als Gewichtungsindikator
+- [ ] Top 10 Short-Kandidaten anzeigen mit KNN-Ausgabewert als Gewichtungsindikator
+- [ ] Gewichtung visuell darstellen (z.B. Balken oder Farbskala von 0 bis 1)
+- [ ] Nutzer entscheidet selbst, ob und wie er handelt (kein automatischer Handel)
+- [ ] Kursverläufe der empfohlenen Aktien visualisieren
 
 ---
 
@@ -82,10 +87,12 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - Welche Aktien / Märkte sollen abgedeckt werden? (Liste der Ticker pflegen)
 - Soll `datum` und `uhrzeit` getrennt gespeichert werden oder als ein `DATETIME`/`TIMESTAMP`-Feld?
 - Welche SQL-Datenbank? (SQLite für den Start, PostgreSQL für Produktion)
-- Normalisierungsmethode: `tanh`-Skalierung oder Min-Max über ein rollendes Fenster?
-- Schwellwert für Handelssignal: ab welchem Ausgabewert `|x|` soll gehandelt werden?
 - Wie werden Labels für das Training generiert? (z.B. tatsächliche Kursbewegung N Minuten nach Abruf)
-- Soll das System reine Simulation bleiben oder echte Orders ermöglichen?
+- Wie groß soll das rollende Fenster für die Min-Max-Normalisierung sein? (z.B. letzten 24h, 7 Tage)
+- Welche Datenquelle soll genutzt werden? (z.B. Yahoo Finance, Alpha Vantage, Polygon.io)
+- Welche Aktien / Märkte sollen abgedeckt werden? (Ticker-Liste festlegen)
+- Soll `datum` und `uhrzeit` getrennt gespeichert werden oder als ein `TIMESTAMP`-Feld?
+- Welche SQL-Datenbank? (SQLite für Entwicklung, PostgreSQL für Produktion)
 
 ---
 
