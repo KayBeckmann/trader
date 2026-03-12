@@ -44,42 +44,42 @@ Ziel: Kursdaten werden automatisch alle 5 Minuten abgerufen und gespeichert.
 
 ---
 
-## Phase 3 – Datenaufbereitung (Feature Engineering)
+## Phase 3 – Datenaufbereitung (Feature Engineering) ✅
 
 Ziel: Rohdaten werden zu normalisierten Feature-Vektoren für das KNN aufbereitet.
 
-- [ ] Relativen Kurswert berechnen (aktuell vs. Vergangenheit):
+- [x] Relativen Kurswert berechnen (aktuell vs. Vergangenheit):
   - Gestiegen → positiver Wert bis `+1`
   - Gefallen → negativer Wert bis `-1`
   - Unverändert → `0`
-- [ ] Min-Max-Skalierung auf `[-1, 1]` über rollendes 7-Tage-Fenster
-- [ ] Drei Deltas je Aktie berechnen:
+- [x] Min-Max-Skalierung auf `[-1, 1]` über rollendes 7-Tage-Fenster
+- [x] Drei Deltas je Aktie berechnen:
   - `delta_5m` – Veränderung der letzten 5 Minuten
   - `delta_20m` – Veränderung der letzten 20 Minuten
   - `delta_60m` – Veränderung der letzten 60 Minuten
-- [ ] Feature-Vektor je Aktie: `[delta_5m, delta_20m, delta_60m]`
-- [ ] Alle Aktien zu gemeinsamem Eingabe-Tensor zusammenführen (90 × 3)
+- [x] Feature-Vektor je Aktie: `[delta_5m, delta_20m, delta_60m]`
+- [x] Alle Aktien zu gemeinsamem Eingabe-Tensor zusammenführen (90 × 3)
 
-**Meilenstein:** Für jeden 5-Minuten-Takt wird ein vollständiger, normalisierter Eingabe-Tensor erzeugt.
+**Meilenstein:** Für jeden 5-Minuten-Takt wird ein vollständiger, normalisierter Eingabe-Tensor erzeugt. ✅
 
 ---
 
-## Phase 4 – KNN & Inferenz
+## Phase 4 – KNN & Inferenz ✅
 
 Ziel: Das neuronale Netz verarbeitet alle Aktien parallel und gibt Empfehlungen aus.
 
-- [ ] KNN-Architektur implementieren:
+- [x] KNN-Architektur implementieren:
   - Eingabe: Tensor `[90 Aktien × 3 Zeitfenster]` (flach: 270 Neuronen)
   - Versteckte Schichten (Größe und Anzahl nach Experiment)
   - Ausgabe: 90 Werte im Bereich `[-1, 1]` via `tanh`
-- [ ] Alle Aktien werden parallel verarbeitet (kein sequenzieller Loop)
-- [ ] Ausgabewerte nach Stärke sortieren:
+- [x] Alle Aktien werden parallel verarbeitet (kein sequenzieller Loop)
+- [x] Ausgabewerte nach Stärke sortieren:
   - Top 10 Long-Kandidaten (höchste positive Werte)
   - Top 10 Short-Kandidaten (stärkste negative Werte)
-- [ ] Modell-Checkpoints in Docker-Volume speichern
-- [ ] Erstes Training mit zufälligen Gewichten (Bootstrap)
+- [x] Modell-Checkpoints in Docker-Volume speichern
+- [x] Erstes Training mit zufälligen Gewichten (Bootstrap)
 
-**Meilenstein:** KNN läuft durch, erzeugt für jeden Takt eine Top-10-Long- und Top-10-Short-Liste.
+**Meilenstein:** KNN läuft durch, erzeugt für jeden Takt eine Top-10-Long- und Top-10-Short-Liste. ✅
 
 ---
 
