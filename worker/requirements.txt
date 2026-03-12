@@ -5,3 +5,4 @@ psycopg2-binary==2.9.10
 torch==2.5.1
 scikit-learn==1.6.0
 python-dotenv==1.0.1
+tzdata==2024.2
