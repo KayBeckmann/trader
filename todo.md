@@ -50,9 +50,30 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - [ ] Ausgabewerte werden nach Stärke sortiert und als Empfehlungsliste weitergereicht:
   - Top 10 Long-Kandidaten (höchste positive Werte, nahe `+1`)
   - Top 10 Short-Kandidaten (stärkste negative Werte, nahe `-1`)
-- [ ] Trainingsdaten aufbereiten (historische Kurse + bekannte Folgebewegungen als Label)
 - [ ] Modell trainieren und evaluieren
-- [ ] Virtuelle Long- und Short-Trades zur Modellvalidierung (Backtesting)
+
+### Virtuelles Trading & Reinforcement Learning
+- [ ] Jede KNN-Empfehlung wird automatisch als virtueller Trade ausgeführt
+- [ ] Handelsgebühr pro Trade definieren und einrechnen
+- [ ] Stop-Loss bei **-15%** (inkl. Gebühren) – Trade wird automatisch geschlossen
+- [ ] Take-Profit bei **+15%** (inkl. Gebühren) – Trade wird automatisch geschlossen
+- [ ] Maximale Haltedauer: **1 Stunde** – danach wird der Trade zwangsweise geschlossen
+- [ ] Ergebnis-Auswertung nach Trade-Schließung:
+  - Take-Profit ausgelöst → **maximale positive Bestärkung** (`reward = +1`)
+  - Stop-Loss ausgelöst → **maximale negative Bestärkung** (`reward = -1`)
+  - Nach 1 Stunde geschlossen mit Gewinn → positive Bestärkung (proportional zum Ergebnis)
+  - Nach 1 Stunde geschlossen mit Verlust → negative Bestärkung (proportional zum Ergebnis)
+  - Kein eindeutiges Ergebnis (Ergebnis ~0) → **wird nicht für das Training verwendet**
+- [ ] Reward-Signal wird ans KNN zurückgegeben (Reinforcement Learning)
+- [ ] Tabelle `trades` in der Datenbank definieren:
+  - `id` – Primärschlüssel
+  - `aktie` – Tickersymbol
+  - `richtung` – `long` oder `short`
+  - `eroeffnet_at` – Zeitpunkt der Eröffnung
+  - `geschlossen_at` – Zeitpunkt der Schließung
+  - `schliessgrund` – `stop_loss`, `take_profit` oder `timeout`
+  - `ergebnis` – prozentuales Ergebnis nach Gebühren
+  - `reward` – verwendetes Reward-Signal (`-1` bis `+1`, oder `null` wenn ignoriert)
 
 ### Backend
 - [ ] REST API für Kursabfragen (z.B. `/kurse?aktie=AAPL&von=...&bis=...`)
@@ -84,15 +105,12 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 
 ## Offene Fragen
 - Welche Datenquelle soll genutzt werden? (z.B. Yahoo Finance, Alpha Vantage, Polygon.io)
-- Welche Aktien / Märkte sollen abgedeckt werden? (Liste der Ticker pflegen)
-- Soll `datum` und `uhrzeit` getrennt gespeichert werden oder als ein `DATETIME`/`TIMESTAMP`-Feld?
-- Welche SQL-Datenbank? (SQLite für den Start, PostgreSQL für Produktion)
-- Wie werden Labels für das Training generiert? (z.B. tatsächliche Kursbewegung N Minuten nach Abruf)
-- Wie groß soll das rollende Fenster für die Min-Max-Normalisierung sein? (z.B. letzten 24h, 7 Tage)
-- Welche Datenquelle soll genutzt werden? (z.B. Yahoo Finance, Alpha Vantage, Polygon.io)
 - Welche Aktien / Märkte sollen abgedeckt werden? (Ticker-Liste festlegen)
-- Soll `datum` und `uhrzeit` getrennt gespeichert werden oder als ein `TIMESTAMP`-Feld?
+- Soll `timestamp` als ein Feld gespeichert werden oder getrennt als `datum` + `uhrzeit`?
 - Welche SQL-Datenbank? (SQLite für Entwicklung, PostgreSQL für Produktion)
+- Wie groß soll das rollende Fenster für die Min-Max-Normalisierung sein? (z.B. 24h, 7 Tage)
+- Wie hoch soll die virtuelle Handelsgebühr pro Trade angesetzt werden?
+- Ab welchem `|reward|` gilt ein Ergebnis als "nicht eindeutig" und wird ignoriert?
 
 ---
 
