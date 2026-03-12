@@ -64,22 +64,22 @@ Ziel: Rohdaten werden zu normalisierten Feature-Vektoren für das KNN aufbereite
 
 ---
 
-## Phase 4 – KNN & Inferenz
+## Phase 4 – KNN & Inferenz ✅
 
 Ziel: Das neuronale Netz verarbeitet alle Aktien parallel und gibt Empfehlungen aus.
 
-- [ ] KNN-Architektur implementieren:
+- [x] KNN-Architektur implementieren:
   - Eingabe: Tensor `[90 Aktien × 3 Zeitfenster]` (flach: 270 Neuronen)
   - Versteckte Schichten (Größe und Anzahl nach Experiment)
   - Ausgabe: 90 Werte im Bereich `[-1, 1]` via `tanh`
-- [ ] Alle Aktien werden parallel verarbeitet (kein sequenzieller Loop)
-- [ ] Ausgabewerte nach Stärke sortieren:
+- [x] Alle Aktien werden parallel verarbeitet (kein sequenzieller Loop)
+- [x] Ausgabewerte nach Stärke sortieren:
   - Top 10 Long-Kandidaten (höchste positive Werte)
   - Top 10 Short-Kandidaten (stärkste negative Werte)
-- [ ] Modell-Checkpoints in Docker-Volume speichern
-- [ ] Erstes Training mit zufälligen Gewichten (Bootstrap)
+- [x] Modell-Checkpoints in Docker-Volume speichern
+- [x] Erstes Training mit zufälligen Gewichten (Bootstrap)
 
-**Meilenstein:** KNN läuft durch, erzeugt für jeden Takt eine Top-10-Long- und Top-10-Short-Liste.
+**Meilenstein:** KNN läuft durch, erzeugt für jeden Takt eine Top-10-Long- und Top-10-Short-Liste. ✅
 
 ---
 
