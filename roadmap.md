@@ -6,41 +6,41 @@
 
 ---
 
-## Phase 1 – Fundament & Infrastruktur
+## Phase 1 – Fundament & Infrastruktur ✅
 
 Ziel: Lauffähige Docker-Umgebung mit Datenbank und erstem Datenabruf.
 
-- [ ] Projektstruktur anlegen (`backend/`, `worker/`, `frontend/`, `db/`)
-- [ ] `docker-compose.yml` mit allen 4 Containern definieren:
+- [x] Projektstruktur anlegen (`backend/`, `worker/`, `frontend/`, `db/`)
+- [x] `docker-compose.yml` mit allen 4 Containern definieren:
   - `db` – PostgreSQL mit persistentem Volume
   - `backend` – FastAPI
   - `worker` – Scheduler + KNN
   - `frontend` – Nginx mit statischen Dateien
-- [ ] Gemeinsames Docker-Netzwerk konfigurieren
-- [ ] `.env`-Datei für Umgebungsvariablen (DB-Credentials, Konfiguration)
-- [ ] PostgreSQL-Schema anlegen:
+- [x] Gemeinsames Docker-Netzwerk konfigurieren
+- [x] `.env`-Datei für Umgebungsvariablen (DB-Credentials, Konfiguration)
+- [x] PostgreSQL-Schema anlegen:
   - Tabelle `kurse` (`id`, `timestamp`, `aktie`, `wert`)
   - Tabelle `trades` (alle Felder inkl. Gebühren und Reward)
   - Aggregierte View `statistik` je Aktie
 
-**Meilenstein:** `docker-compose up` startet alle Container ohne Fehler, Datenbank ist erreichbar.
+**Meilenstein:** `docker-compose up` startet alle Container ohne Fehler, Datenbank ist erreichbar. ✅
 
 ---
 
-## Phase 2 – Datenabruf & Speicherung
+## Phase 2 – Datenabruf & Speicherung ✅
 
 Ziel: Kursdaten werden automatisch alle 5 Minuten abgerufen und gespeichert.
 
-- [ ] yfinance-Integration im `worker`-Container (`pip install yfinance`)
-- [ ] Ticker-Liste der 90 MSCI-ACWI-Titel hinterlegen (6 Sektoren)
-- [ ] Batch-Abruf aller Ticker: `yf.download(tickers=[...], interval="5m", period="1d")`
-- [ ] Handelszeiten-Check implementieren (NYSE: Mo–Fr 15:30–22:00 Uhr MEZ)
-- [ ] APScheduler: Job alle 5 Minuten, außerhalb der Handelszeiten überspringen
-- [ ] Abgerufene Kurse in Tabelle `kurse` schreiben
-- [ ] Fehlerbehandlung: Retry-Logik bei API-Ausfällen, Logging
-- [ ] Historische Kursdaten initial laden (Backfill, max. 60 Tage bei 5m-Auflösung)
+- [x] yfinance-Integration im `worker`-Container (`pip install yfinance`)
+- [x] Ticker-Liste der 90 MSCI-ACWI-Titel hinterlegen (6 Sektoren)
+- [x] Batch-Abruf aller Ticker: `yf.download(tickers=[...], interval="5m", period="1d")`
+- [x] Handelszeiten-Check implementieren (NYSE: Mo–Fr 15:30–22:00 Uhr MEZ)
+- [x] APScheduler: Job alle 5 Minuten, außerhalb der Handelszeiten überspringen
+- [x] Abgerufene Kurse in Tabelle `kurse` schreiben
+- [x] Fehlerbehandlung: Retry-Logik bei API-Ausfällen, Logging
+- [x] Historische Kursdaten initial laden (Backfill, max. 60 Tage bei 5m-Auflösung)
 
-**Meilenstein:** Datenbank füllt sich automatisch während der Handelszeiten mit 5-Minuten-Kursen aller 90 Titel.
+**Meilenstein:** Datenbank füllt sich automatisch während der Handelszeiten mit 5-Minuten-Kursen aller 90 Titel. ✅
 
 ---
 

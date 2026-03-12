@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS kurse (
     id          BIGSERIAL PRIMARY KEY,
     timestamp   TIMESTAMPTZ NOT NULL,
     aktie       VARCHAR(20) NOT NULL,
-    wert        NUMERIC(18, 6) NOT NULL
+    wert        NUMERIC(18, 6) NOT NULL,
+    CONSTRAINT uq_kurse_aktie_timestamp UNIQUE (aktie, timestamp)
 );
 
 CREATE INDEX IF NOT EXISTS idx_kurse_aktie_timestamp ON kurse (aktie, timestamp DESC);
