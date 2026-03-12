@@ -3,32 +3,303 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trader – Dashboard</title>
+  <title>Trader – KI-Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; background: #0f172a; color: #e2e8f0; }
-    .disclaimer {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: #7f1d1d;
-      color: #fecaca;
-      text-align: center;
-      padding: 0.6rem 1rem;
-      font-size: 0.85rem;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f172a;
+      --surface: #1e293b;
+      --border:  #334155;
+      --text:    #e2e8f0;
+      --muted:   #94a3b8;
+      --green:   #22c55e;
+      --red:     #ef4444;
+      --blue:    #38bdf8;
     }
-    main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { color: #38bdf8; }
+
+    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; font-size: 14px; }
+
+    /* Disclaimer – immer sichtbar, nicht wegklickbar */
+    .disclaimer {
+      position: sticky; top: 0; z-index: 100;
+      background: #7f1d1d; color: #fecaca;
+      text-align: center; padding: .5rem 1rem; font-size: .8rem; line-height: 1.4;
+    }
+
+    header {
+      padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    header h1 { font-size: 1.2rem; color: var(--blue); }
+    #ts-label      { margin-left: auto; color: var(--muted); font-size: .75rem; }
+    #refresh-info  { color: var(--muted); font-size: .75rem; }
+    #refresh-btn   {
+      padding: .3rem .8rem; background: var(--surface);
+      border: 1px solid var(--border); color: var(--text);
+      border-radius: .4rem; cursor: pointer; font-size: .8rem;
+    }
+    #refresh-btn:hover { background: var(--border); }
+
+    main { max-width: 1400px; margin: 0 auto; padding: 1.5rem; display: grid; gap: 1.5rem; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: .6rem; padding: 1rem;
+    }
+    .card h2 {
+      font-size: .85rem; color: var(--muted); margin-bottom: .8rem;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* Gesamtstatistik */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .7rem;
+    }
+    .stat-box { background: var(--bg); border-radius: .4rem; padding: .7rem 1rem; text-align: center; }
+    .stat-box .val { font-size: 1.35rem; font-weight: 700; }
+    .stat-box .lbl { font-size: .7rem; color: var(--muted); margin-top: .2rem; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .neu { color: var(--blue); }
+
+    /* Empfehlungen */
+    .empf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 680px) { .empf-grid { grid-template-columns: 1fr; } }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; padding: .35rem .5rem;
+      font-size: .75rem; color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    tbody tr:hover { background: rgba(255,255,255,.03); }
+    td { padding: .35rem .5rem; }
+
+    .bar-cell { display: flex; align-items: center; gap: .4rem; }
+    .bar-wrap  { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 3px; }
+    .bar-long  { background: var(--green); }
+    .bar-short { background: var(--red); }
+    .bar-val   { font-size: .72rem; color: var(--muted); width: 3.8rem; text-align: right; }
+
+    /* Kurschart */
+    .chart-controls { display: flex; gap: .6rem; align-items: center; margin-bottom: .8rem; flex-wrap: wrap; }
+    select {
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: .4rem;
+      padding: .3rem .6rem; font-size: .85rem;
+    }
+    canvas { max-height: 280px; }
+
+    /* Statistik-Tabelle */
+    .tbl-wrap { overflow-x: auto; }
+    .win  { color: var(--green); }
+    .loss { color: var(--red); }
   </style>
 </head>
 <body>
-  <div class="disclaimer">
-    ⚠️ <strong>Dieses Projekt ist ein reines Schulungs- und Forschungsprojekt.</strong>
-    Die angezeigten Informationen stellen <strong>keine Anlageberatung</strong> dar.
-    Alle Signale sind experimentell und dienen ausschließlich Lernzwecken.
+
+<div class="disclaimer">
+  ⚠️ <strong>Schulungs- und Forschungsprojekt – keine Anlageberatung.</strong>
+  Alle Signale sind experimentell und dienen ausschließlich Lernzwecken.
+  Kein automatischer Handel – der Nutzer entscheidet selbst.
+</div>
+
+<header>
+  <h1>Trader – KI-Dashboard</h1>
+  <span id="ts-label"></span>
+  <span id="refresh-info">Auto-Update alle 5 min</span>
+  <button id="refresh-btn" onclick="loadAll()">↻ Aktualisieren</button>
+</header>
+
+<main>
+
+  <!-- Gesamtstatistik -->
+  <div class="card">
+    <h2>Gesamtstatistik</h2>
+    <div class="stats-grid" id="stats-gesamt">
+      <div class="stat-box"><div class="val neu">–</div><div class="lbl">Trades gesamt</div></div>
+    </div>
   </div>
-  <main>
-    <h1>Trader – Dashboard</h1>
-    <p>Infrastruktur bereit. Weitere Funktionen folgen in den nächsten Phasen.</p>
-  </main>
+
+  <!-- Empfehlungen -->
+  <div class="card">
+    <h2>Aktuelle Empfehlungen</h2>
+    <div class="empf-grid">
+      <div>
+        <table>
+          <thead><tr><th>🟢 Long-Kandidaten</th><th>KNN-Stärke</th></tr></thead>
+          <tbody id="long-body"><tr><td colspan="2">Lade…</td></tr></tbody>
+        </table>
+      </div>
+      <div>
+        <table>
+          <thead><tr><th>🔴 Short-Kandidaten</th><th>KNN-Stärke</th></tr></thead>
+          <tbody id="short-body"><tr><td colspan="2">Lade…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kursverlauf -->
+  <div class="card">
+    <h2>Kursverlauf</h2>
+    <div class="chart-controls">
+      <select id="ticker-select"><option value="">– Aktie wählen –</option></select>
+      <select id="hours-select">
+        <option value="4">4 Stunden</option>
+        <option value="24" selected>24 Stunden</option>
+        <option value="72">3 Tage</option>
+        <option value="168">7 Tage</option>
+      </select>
+    </div>
+    <canvas id="kurse-chart"></canvas>
+  </div>
+
+  <!-- Statistik je Aktie -->
+  <div class="card">
+    <h2>Statistik je Aktie</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Aktie</th><th>Trades</th><th>Gewinn</th><th>Verlust</th>
+            <th>Ergebnis €</th><th>Trefferquote</th><th>Ø € / Trade</th>
+          </tr>
+        </thead>
+        <tbody id="stats-body"><tr><td colspan="7">Lade…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const API = '';   // gleicher Origin (Nginx → Backend-Proxy)
+  let kurseChart = null;
+
+  // ── Hilfsfunktionen ────────────────────────────────────────────────────────
+  const fmt   = (n, d=2) => n == null ? '–' : Number(n).toFixed(d);
+  const clamp = (v,a,b)  => Math.min(Math.max(v, a), b);
+  const colorCls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+
+  async function get(path) {
+    const r = await fetch(API + path);
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${path}`);
+    return r.json();
+  }
+
+  // ── Gesamtstatistik ────────────────────────────────────────────────────────
+  async function loadGesamt() {
+    const d = await get('/statistik/gesamt');
+    const eur = d.gesamtergebnis_eur;
+    document.getElementById('stats-gesamt').innerHTML = `
+      <div class="stat-box"><div class="val neu">${d.trades_gesamt}</div><div class="lbl">Trades gesamt</div></div>
+      <div class="stat-box"><div class="val pos">${d.trades_gewinn}</div><div class="lbl">Gewinntrades</div></div>
+      <div class="stat-box"><div class="val neg">${d.trades_verlust}</div><div class="lbl">Verlusttrades</div></div>
+      <div class="stat-box"><div class="val ${colorCls(eur)}">${fmt(eur)} €</div><div class="lbl">Gesamtergebnis</div></div>
+      <div class="stat-box"><div class="val ${colorCls(d.trefferquote_pct - 50)}">${fmt(d.trefferquote_pct)} %</div><div class="lbl">Trefferquote</div></div>
+      <div class="stat-box"><div class="val ${colorCls(d.durchschnitt_eur)}">${fmt(d.durchschnitt_eur, 4)} €</div><div class="lbl">Ø / Trade</div></div>
+    `;
+  }
+
+  // ── Empfehlungen ───────────────────────────────────────────────────────────
+  async function loadEmpfehlungen() {
+    const d = await get('/empfehlungen');
+    if (d.timestamp) {
+      document.getElementById('ts-label').textContent =
+        'Stand: ' + new Date(d.timestamp).toLocaleString('de-DE');
+    }
+
+    const row = (e, cls) => {
+      const pct = clamp(Math.abs(e.knn_wert) * 100, 0, 100).toFixed(1);
+      return `<tr>
+        <td><strong>${e.aktie}</strong></td>
+        <td><div class="bar-cell">
+          <div class="bar-wrap"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+          <span class="bar-val">${fmt(e.knn_wert, 4)}</span>
+        </div></td>
+      </tr>`;
+    };
+
+    document.getElementById('long-body').innerHTML =
+      d.long.length  ? d.long.map(e  => row(e, 'bar-long')).join('')
+                     : '<tr><td colspan="2">Keine Daten</td></tr>';
+    document.getElementById('short-body').innerHTML =
+      d.short.length ? d.short.map(e => row(e, 'bar-short')).join('')
+                     : '<tr><td colspan="2">Keine Daten</td></tr>';
+
+    // Ticker-Dropdown einmalig befüllen
+    const sel = document.getElementById('ticker-select');
+    if (sel.options.length <= 1 && (d.long.length || d.short.length)) {
+      const tickers = [...new Set([...d.long.map(e => e.aktie), ...d.short.map(e => e.aktie)])].sort();
+      tickers.forEach(t => sel.add(new Option(t, t)));
+      sel.value = tickers[0];
+      loadKurse();
+    }
+  }
+
+  // ── Kursverlauf ────────────────────────────────────────────────────────────
+  async function loadKurse() {
+    const aktie   = document.getElementById('ticker-select').value;
+    const stunden = document.getElementById('hours-select').value;
+    if (!aktie) return;
+    try {
+      const d = await get(`/kurse?aktie=${aktie}&stunden=${stunden}`);
+      const labels = d.kurse.map(k =>
+        new Date(k.timestamp).toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
+      );
+      const data = d.kurse.map(k => k.wert);
+      if (kurseChart) kurseChart.destroy();
+      kurseChart = new Chart(document.getElementById('kurse-chart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: aktie, data,
+            borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,.07)',
+            borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: true,
+          }],
+        },
+        options: {
+          animation: false, responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#94a3b8', maxTicksLimit: 8 }, grid: { color: '#1e293b' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+          },
+        },
+      });
+    } catch (e) { console.warn('Kurse:', e.message); }
+  }
+
+  // ── Statistik je Aktie ─────────────────────────────────────────────────────
+  async function loadStatsAktie() {
+    const rows = await get('/statistik');
+    document.getElementById('stats-body').innerHTML = rows.length
+      ? rows.map(r => `<tr>
+          <td><strong>${r.aktie}</strong></td>
+          <td>${r.trades_gesamt}</td>
+          <td class="win">${r.trades_gewinn}</td>
+          <td class="loss">${r.trades_verlust}</td>
+          <td class="${colorCls(r.gesamtergebnis_eur)}">${fmt(r.gesamtergebnis_eur)} €</td>
+          <td class="${colorCls(r.trefferquote_pct - 50)}">${fmt(r.trefferquote_pct)} %</td>
+          <td class="${colorCls(r.durchschnitt_eur)}">${fmt(r.durchschnitt_eur, 4)} €</td>
+        </tr>`).join('')
+      : '<tr><td colspan="7">Noch keine abgeschlossenen Trades.</td></tr>';
+  }
+
+  // ── Alles laden ────────────────────────────────────────────────────────────
+  async function loadAll() {
+    await Promise.allSettled([loadGesamt(), loadEmpfehlungen(), loadStatsAktie()]);
+  }
+
+  document.getElementById('ticker-select').addEventListener('change', loadKurse);
+  document.getElementById('hours-select').addEventListener('change',  loadKurse);
+
+  loadAll();
+  setInterval(loadAll, 5 * 60 * 1000);  // Auto-Update alle 5 Minuten
+</script>
 </body>
 </html>

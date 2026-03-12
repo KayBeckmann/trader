@@ -120,21 +120,21 @@ Ziel: Backend stellt alle nötigen Daten für das Frontend bereit.
 
 ---
 
-## Phase 7 – Frontend
+## Phase 7 – Frontend ✅
 
 Ziel: Dashboard zeigt Empfehlungen, Statistiken und Kursverläufe übersichtlich an.
 
-- [ ] `index.html` als Single-Page-Dashboard (HTML + Vanilla JS + CSS)
-- [ ] Kein Build-Schritt, Chart.js via CDN
-- [ ] Dauerhaft sichtbarer Disclaimer (nicht wegklickbar)
-- [ ] Top-10-Long-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
-- [ ] Top-10-Short-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
-- [ ] Je Aktie: Trefferquote, kumuliertes Ergebnis in €, Anzahl Trades
-- [ ] Gesamtstatistik des KNN (Portfolio-Sicht)
-- [ ] Kursverlauf-Chart für ausgewählte Aktie (Chart.js)
-- [ ] Automatische Aktualisierung alle 5 Minuten via `setInterval`
+- [x] `index.html` als Single-Page-Dashboard (HTML + Vanilla JS + CSS)
+- [x] Kein Build-Schritt, Chart.js via CDN
+- [x] Dauerhaft sichtbarer Disclaimer (nicht wegklickbar)
+- [x] Top-10-Long-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
+- [x] Top-10-Short-Tabelle mit KNN-Gewichtung (Balken/Farbskala)
+- [x] Je Aktie: Trefferquote, kumuliertes Ergebnis in €, Anzahl Trades
+- [x] Gesamtstatistik des KNN (Portfolio-Sicht)
+- [x] Kursverlauf-Chart für ausgewählte Aktie (Chart.js)
+- [x] Automatische Aktualisierung alle 5 Minuten via `setInterval`
 
-**Meilenstein:** Dashboard läuft im Browser, aktualisiert sich automatisch, zeigt alle Kennzahlen.
+**Meilenstein:** Dashboard läuft im Browser, aktualisiert sich automatisch, zeigt alle Kennzahlen. ✅
 
 ---
 
