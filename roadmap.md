@@ -107,16 +107,16 @@ Ziel: KNN-Empfehlungen werden als virtuelle Trades ausgeführt und das Ergebnis 
 
 ---
 
-## Phase 6 – REST API
+## Phase 6 – REST API ✅
 
 Ziel: Backend stellt alle nötigen Daten für das Frontend bereit.
 
-- [ ] `GET /empfehlungen` – aktuelle Top-10-Long- und Top-10-Short-Liste mit KNN-Wert
-- [ ] `GET /statistik` – Trefferquote, Gesamtergebnis, Anzahl Trades je Aktie
-- [ ] `GET /statistik/gesamt` – aggregierte KNN-Performance über alle Aktien
-- [ ] `GET /kurse?aktie=AAPL` – Kursverlauf einer Aktie für Chart
+- [x] `GET /empfehlungen` – aktuelle Top-10-Long- und Top-10-Short-Liste mit KNN-Wert
+- [x] `GET /statistik` – Trefferquote, Gesamtergebnis, Anzahl Trades je Aktie
+- [x] `GET /statistik/gesamt` – aggregierte KNN-Performance über alle Aktien
+- [x] `GET /kurse?aktie=AAPL` – Kursverlauf einer Aktie für Chart
 
-**Meilenstein:** Alle API-Endpunkte liefern valide JSON-Antworten.
+**Meilenstein:** Alle API-Endpunkte liefern valide JSON-Antworten. ✅
 
 ---
 

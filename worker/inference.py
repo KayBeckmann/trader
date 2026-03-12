@@ -13,11 +13,14 @@ import json
 import logging
 import os
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import torch
+from sqlalchemy import text
 
+from db import engine
 from model import TraderNet
 from tickers import TICKERS
 
@@ -105,14 +108,39 @@ def run_inference(tensor: np.ndarray) -> Inferenzresultat:
         raw_output=output,
     )
     _save_latest(result)
+    _save_to_db(result)
     return result
 
 
 def _save_latest(result: Inferenzresultat) -> None:
-    """Persistiert die letzten Empfehlungen als JSON im Modell-Volume."""
+    """Persistiert die letzten Empfehlungen als JSON im Modell-Volume (Backup)."""
     _MODEL_DIR.mkdir(parents=True, exist_ok=True)
     data = {
         "long_top10": [asdict(e) for e in result.long_top10],
         "short_top10": [asdict(e) for e in result.short_top10],
     }
     LATEST_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+
+
+def _save_to_db(result: Inferenzresultat) -> None:
+    """Schreibt die aktuellen Empfehlungen in die Tabelle `empfehlungen`."""
+    ts = datetime.now(timezone.utc)
+    rows = [
+        {"timestamp": ts, "aktie": e.aktie, "richtung": "long", "knn_wert": e.wert}
+        for e in result.long_top10
+    ] + [
+        {"timestamp": ts, "aktie": e.aktie, "richtung": "short", "knn_wert": e.wert}
+        for e in result.short_top10
+    ]
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                text("""
+                    INSERT INTO empfehlungen (timestamp, aktie, richtung, knn_wert)
+                    VALUES (:timestamp, :aktie, :richtung, :knn_wert)
+                """),
+                rows,
+            )
+            conn.commit()
+    except Exception as exc:
+        logger.warning("Empfehlungen konnten nicht in DB geschrieben werden: %s", exc)
