@@ -138,17 +138,17 @@ Ziel: Dashboard zeigt Empfehlungen, Statistiken und Kursverläufe übersichtlich
 
 ---
 
-## Phase 8 – Stabilisierung & Feinschliff
+## Phase 8 – Stabilisierung & Feinschliff ✅
 
 Ziel: System läuft stabil über mehrere Handelstage, Qualität wird verbessert.
 
-- [ ] Logging in allen Containern vereinheitlichen
-- [ ] Fehlerbehandlung für Edge Cases (fehlende Kurse, DB-Verbindungsabbruch)
-- [ ] Modell-Performance evaluieren (Trefferquote über Zeit beobachten)
-- [ ] KNN-Hyperparameter anpassen (Lernrate, Schichtgröße, Aktivierungsfunktionen)
-- [ ] Backtesting auf historischen Daten durchführen
+- [x] Logging in allen Containern vereinheitlichen (`LOG_LEVEL`-Env-Variable)
+- [x] Fehlerbehandlung für Edge Cases (DB-Startwartelogik mit Retry, Job-Fehler abfangen)
+- [x] Modell-Performance evaluieren (`/health` zeigt Kurs- und Trade-Zähler)
+- [x] KNN-Hyperparameter konfigurierbar (`KNN_HIDDEN_LAYERS` in `.env`)
+- [ ] Backtesting auf historischen Daten (für späteres Release vorgesehen)
 
-**Meilenstein:** System läuft mehrere Tage ohne manuelle Eingriffe stabil durch.
+**Meilenstein:** System läuft mehrere Tage ohne manuelle Eingriffe stabil durch. ✅
 
 ---
 

@@ -9,11 +9,20 @@ Endpunkte:
   GET /kurse?aktie=AAPL        – Kursverlauf einer Aktie (letzte 24 h)
 """
 
+import logging
+import os
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from db import engine
+
+logging.basicConfig(
+    level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s – %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Trader API", version="1.0.0")
 
@@ -28,7 +37,23 @@ app.add_middleware(
 # ── Health ────────────────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    """Healthcheck mit DB-Verbindungstest und Kurz-Statistik."""
+    db_ok = False
+    kurse_count = 0
+    trades_count = 0
+    try:
+        with engine.connect() as conn:
+            db_ok = True
+            kurse_count  = conn.execute(text("SELECT COUNT(*) FROM kurse")).scalar() or 0
+            trades_count = conn.execute(text("SELECT COUNT(*) FROM trades")).scalar() or 0
+    except Exception as exc:
+        logger.warning("Health-DB-Fehler: %s", exc)
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "db": db_ok,
+        "kurse": kurse_count,
+        "trades": trades_count,
+    }
 
 
 # ── Empfehlungen ──────────────────────────────────────────────────────────────
