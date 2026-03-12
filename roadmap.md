@@ -44,23 +44,23 @@ Ziel: Kursdaten werden automatisch alle 5 Minuten abgerufen und gespeichert.
 
 ---
 
-## Phase 3 – Datenaufbereitung (Feature Engineering)
+## Phase 3 – Datenaufbereitung (Feature Engineering) ✅
 
 Ziel: Rohdaten werden zu normalisierten Feature-Vektoren für das KNN aufbereitet.
 
-- [ ] Relativen Kurswert berechnen (aktuell vs. Vergangenheit):
+- [x] Relativen Kurswert berechnen (aktuell vs. Vergangenheit):
   - Gestiegen → positiver Wert bis `+1`
   - Gefallen → negativer Wert bis `-1`
   - Unverändert → `0`
-- [ ] Min-Max-Skalierung auf `[-1, 1]` über rollendes 7-Tage-Fenster
-- [ ] Drei Deltas je Aktie berechnen:
+- [x] Min-Max-Skalierung auf `[-1, 1]` über rollendes 7-Tage-Fenster
+- [x] Drei Deltas je Aktie berechnen:
   - `delta_5m` – Veränderung der letzten 5 Minuten
   - `delta_20m` – Veränderung der letzten 20 Minuten
   - `delta_60m` – Veränderung der letzten 60 Minuten
-- [ ] Feature-Vektor je Aktie: `[delta_5m, delta_20m, delta_60m]`
-- [ ] Alle Aktien zu gemeinsamem Eingabe-Tensor zusammenführen (90 × 3)
+- [x] Feature-Vektor je Aktie: `[delta_5m, delta_20m, delta_60m]`
+- [x] Alle Aktien zu gemeinsamem Eingabe-Tensor zusammenführen (90 × 3)
 
-**Meilenstein:** Für jeden 5-Minuten-Takt wird ein vollständiger, normalisierter Eingabe-Tensor erzeugt.
+**Meilenstein:** Für jeden 5-Minuten-Takt wird ein vollständiger, normalisierter Eingabe-Tensor erzeugt. ✅
 
 ---
 
