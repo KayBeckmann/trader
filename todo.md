@@ -24,9 +24,30 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - [ ] Datenbankmodell (ORM) implementieren
 - [ ] Migrations-Workflow einrichten
 
-### KI / Prognose
-- [ ] KNN-Modell aufsetzen (Long/Short-Prognose)
-- [ ] Trainingsdaten aufbereiten
+### Datenaufbereitung (Feature Engineering)
+- [ ] Relativen Kurswert berechnen: aktueller Kurs im Verhältnis zum Vergangenheitswert
+  - Kurs unverändert → `0`
+  - Kurs gefallen → negativer Wert, max. `-1`
+  - Kurs gestiegen → positiver Wert, max. `+1`
+- [ ] Normalisierung auf den Bereich `[-1, 1]` (z.B. via tanh oder Min-Max-Skalierung)
+- [ ] Drei Zeitfenster pro Aktie berechnen:
+  - `delta_5m` – Veränderung der letzten 5 Minuten
+  - `delta_20m` – Veränderung der letzten 20 Minuten
+  - `delta_60m` – Veränderung der letzten 60 Minuten
+- [ ] Feature-Vektor pro Aktie: `[delta_5m, delta_20m, delta_60m]`
+- [ ] Alle Aktien und alle Zeitfenster zu einem gemeinsamen Eingabe-Tensor zusammenführen
+
+### KI / Prognose (KNN)
+- [ ] KNN-Architektur definieren:
+  - **Eingabe:** Alle Aktien × 3 Zeitfenster (flacher oder strukturierter Eingabe-Vektor)
+  - **Ausgabe:** Ein Wert je Aktie im Bereich `[-1, 1]`
+    - `-1` → Short-Signal
+    - ` 0` → Keine Aktion
+    - `+1` → Long-Signal
+- [ ] Alle Aktien werden **parallel** durch dasselbe Netz verarbeitet (kein sequenzieller Loop)
+- [ ] Aktivierungsfunktion am Ausgang: `tanh` (liefert nativ `[-1, 1]`)
+- [ ] Schwellwert definieren: ab welchem Ausgabewert wird tatsächlich gehandelt? (z.B. `|x| > 0.5`)
+- [ ] Trainingsdaten aufbereiten (historische Kurse + bekannte Folgebewegungen als Label)
 - [ ] Modell trainieren und evaluieren
 - [ ] Virtuelle Long- und Short-Trades zur Modellvalidierung
 
@@ -61,7 +82,9 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - Welche Aktien / Märkte sollen abgedeckt werden? (Liste der Ticker pflegen)
 - Soll `datum` und `uhrzeit` getrennt gespeichert werden oder als ein `DATETIME`/`TIMESTAMP`-Feld?
 - Welche SQL-Datenbank? (SQLite für den Start, PostgreSQL für Produktion)
-- Wie oft sollen Prognosen aktualisiert werden?
+- Normalisierungsmethode: `tanh`-Skalierung oder Min-Max über ein rollendes Fenster?
+- Schwellwert für Handelssignal: ab welchem Ausgabewert `|x|` soll gehandelt werden?
+- Wie werden Labels für das Training generiert? (z.B. tatsächliche Kursbewegung N Minuten nach Abruf)
 - Soll das System reine Simulation bleiben oder echte Orders ermöglichen?
 
 ---
