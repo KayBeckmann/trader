@@ -91,8 +91,35 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 
 ### Backend
 - [ ] REST API für Kursabfragen (z.B. `/kurse?aktie=AAPL&von=...&bis=...`)
-- [ ] Scheduler-Service für den 5-Minuten-Abruf (z.B. APScheduler oder Celery Beat)
-- [ ] Datenquelle anbinden (API-Key-Verwaltung, Rate-Limit beachten)
+- [ ] Scheduler-Service für den 5-Minuten-Abruf (APScheduler im `worker`-Container)
+- [ ] Datenquelle: **yfinance** (`pip install yfinance`)
+  - Kostenlos, kein API-Key erforderlich
+  - Unterstützt `interval="5m"` nativ
+  - Abruf nur während Handelszeiten sinnvoll (NYSE: Mo–Fr 15:30–22:00 Uhr MEZ)
+  - Alle Ticker in einem Batch abrufen: `yf.download(tickers=[...], interval="5m", period="1d")`
+- [ ] Handelszeiten-Check vor jedem Abruf (außerhalb → überspringen, kein Leereintrag)
+- [ ] Ticker-Liste: **Top-Holdings des MSCI ACWI** (US-gelistet, liquide)
+
+```
+# Technologie (USA)
+AAPL, MSFT, NVDA, AMZN, META, GOOGL, TSLA, AVGO, ORCL, AMD,
+NFLX, CRM, INTC, CSCO, IBM, QCOM, TXN, ADBE, NOW, INTU
+
+# Finanzen (USA)
+JPM, BAC, GS, MS, V, MA, BLK, AXP, WFC, C
+
+# Gesundheit (USA)
+LLY, UNH, JNJ, MRK, ABBV, ABT, TMO, DHR, AMGN, ISRG
+
+# Energie & Industrie (USA)
+XOM, CVX, GE, CAT, DE, LMT, RTX, BA, HON, UPS
+
+# Konsumgüter (USA)
+WMT, COST, HD, MCD, PG, KO, PEP, SBUX, NKE, TGT
+
+# International (ADR / US-gelistet)
+TSM, ASML, NVO, SAP, TTE, SHEL, SNY, AZN, RIO, UL
+```
 
 ### Frontend (HTML + Vanilla JS)
 - [ ] Einzelne `index.html` als Einstiegspunkt
@@ -132,20 +159,19 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 ---
 
 ## Offene Fragen
-- Welche Datenquelle soll genutzt werden? (z.B. Yahoo Finance, Alpha Vantage, Polygon.io)
-- Welche Aktien / Märkte sollen abgedeckt werden? (Ticker-Liste festlegen)
-- Soll `timestamp` als ein Feld gespeichert werden oder getrennt als `datum` + `uhrzeit`?
-- Welche SQL-Datenbank? (SQLite für Entwicklung, PostgreSQL für Produktion)
-- Wie groß soll das rollende Fenster für die Min-Max-Normalisierung sein? (z.B. 24h, 7 Tage)
+- Wie groß soll das rollende Fenster für die Min-Max-Normalisierung sein? (Vorschlag: 7 Tage)
 
 ---
 
 ## Nächste Schritte
-- [ ] Datenquelle auswählen und API-Key beschaffen
-- [ ] Ticker-Liste der gewünschten Aktien festlegen
-- [ ] SQL-Datenbank und Schema einrichten (ggf. SQLite für Entwicklung)
-- [ ] Scheduler mit erstem Abruf-Job implementieren
-- [ ] Datenbankschreibung testen (Datum, Uhrzeit, Aktie, Wert)
-- [ ] Technologie-Stack final entscheiden
-- [ ] Projektstruktur (Verzeichnisse, Module) definieren
+- [ ] Projektstruktur (Verzeichnisse, Module) anlegen
+- [ ] `docker-compose.yml` mit allen 4 Containern aufsetzen
+- [ ] PostgreSQL-Schema anlegen (Tabellen `kurse`, `trades`, View `statistik`)
+- [ ] yfinance-Abruf mit Ticker-Liste testen (5-Minuten-Daten, Batch-Download)
+- [ ] Scheduler mit erstem Abruf-Job implementieren (inkl. Handelszeiten-Check)
+- [ ] Datenbankschreibung testen
+- [ ] KNN-Architektur implementieren
+- [ ] Reinforcement-Learning-Loop aufbauen (Trade → Reward → Training)
+- [ ] REST API für Frontend aufbauen
+- [ ] Frontend-Dashboard implementieren
 - [ ] Roadmap.md aus dieser Todo generieren
