@@ -94,30 +94,40 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - [ ] Scheduler-Service für den 5-Minuten-Abruf (z.B. APScheduler oder Celery Beat)
 - [ ] Datenquelle anbinden (API-Key-Verwaltung, Rate-Limit beachten)
 
-### Frontend
-- [ ] Dashboard als Hauptansicht
-- [ ] Top 10 Long-Kandidaten mit KNN-Ausgabewert als Gewichtungsindikator (Balken/Farbskala)
-- [ ] Top 10 Short-Kandidaten mit KNN-Ausgabewert als Gewichtungsindikator (Balken/Farbskala)
-- [ ] Je Aktie in der Top-10-Liste: Gewinn/Verlust-Statistik anzeigen:
-  - Trefferquote (% Gewinntrades)
-  - Gesamtergebnis in € (kumuliert)
-  - Anzahl Trades
-- [ ] Gesamtstatistik des KNN über alle Aktien (Portfolio-Sicht)
+### Frontend (HTML + Vanilla JS)
+- [ ] Einzelne `index.html` als Einstiegspunkt
+- [ ] Kein Build-Schritt, kein Framework – reines HTML + JS + CSS
+- [ ] Daten werden per `fetch()` von der Backend-API geladen
+- [ ] Dashboard als Hauptansicht:
+  - Top 10 Long-Kandidaten mit KNN-Ausgabewert als Gewichtungsindikator (Balken/Farbskala)
+  - Top 10 Short-Kandidaten mit KNN-Ausgabewert als Gewichtungsindikator (Balken/Farbskala)
+  - Je Aktie: Trefferquote, kumuliertes Ergebnis in €, Anzahl Trades
+  - Gesamtstatistik des KNN über alle Aktien
+- [ ] Kursverläufe mit Chart.js visualisieren (via CDN, kein npm)
+- [ ] Automatische Aktualisierung alle 5 Minuten (z.B. via `setInterval`)
 - [ ] Nutzer entscheidet selbst, ob und wie er handelt (kein automatischer Handel)
-- [ ] Kursverläufe der empfohlenen Aktien visualisieren
 
 ---
 
-## Technologie-Stack (Vorschläge)
+## Technologie-Stack
 
-| Bereich       | Technologie                       |
-|---------------|-----------------------------------|
-| Backend       | Python / FastAPI                  |
-| ML            | Scikit-learn, NumPy, Pandas       |
-| Hintergrundjobs | Celery + Redis                  |
-| Datenbank     | PostgreSQL + SQLAlchemy           |
-| Frontend      | Vue.js + Chart.js                 |
-| Deployment    | Docker / docker-compose           |
+| Bereich         | Technologie                          | Container        |
+|-----------------|--------------------------------------|------------------|
+| Backend/API     | Python / FastAPI                     | `backend`        |
+| ML / Scheduler  | PyTorch, Scikit-learn, APScheduler   | `worker`         |
+| Datenbank       | PostgreSQL + SQLAlchemy              | `db`             |
+| Frontend        | HTML + Vanilla JS + Chart.js         | `frontend`       |
+| Reverse Proxy   | Nginx                                | `nginx`          |
+
+### Docker-Architektur
+- [ ] `docker-compose.yml` mit allen Services definieren
+- [ ] Container `db` – PostgreSQL-Datenbank mit persistentem Volume
+- [ ] Container `backend` – FastAPI-App, stellt REST API bereit
+- [ ] Container `worker` – Scheduler (5-min-Abruf) + KNN-Training/-Inferenz
+- [ ] Container `frontend` – Nginx liefert statische HTML/JS-Dateien aus
+- [ ] Gemeinsames internes Netzwerk für Container-Kommunikation
+- [ ] Umgebungsvariablen via `.env`-Datei (API-Keys, DB-Credentials)
+- [ ] Volumes für Datenbankpersistenz und ggf. Modell-Checkpoints
 
 ---
 
