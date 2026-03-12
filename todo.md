@@ -54,16 +54,17 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 
 ### Virtuelles Trading & Reinforcement Learning
 - [ ] Jede KNN-Empfehlung wird automatisch als virtueller Trade ausgeführt
-- [ ] Handelsgebühr pro Trade definieren und einrechnen
-- [ ] Stop-Loss bei **-15%** (inkl. Gebühren) – Trade wird automatisch geschlossen
-- [ ] Take-Profit bei **+15%** (inkl. Gebühren) – Trade wird automatisch geschlossen
+- [ ] Handelsgebühr: **0,5% pro Trade** (Ein- und Ausstieg je 0,5%, also 1% gesamt)
+- [ ] Virtuelles Kapital pro Trade: **100 €**
+- [ ] Stop-Loss bei **-15%** (inkl. Gebühren) → Trade wird automatisch geschlossen
+- [ ] Take-Profit bei **+15%** (inkl. Gebühren) → Trade wird automatisch geschlossen
 - [ ] Maximale Haltedauer: **1 Stunde** – danach wird der Trade zwangsweise geschlossen
-- [ ] Ergebnis-Auswertung nach Trade-Schließung:
+- [ ] Ergebnis-Auswertung nach Trade-Schließung (absolut in €):
   - Take-Profit ausgelöst → **maximale positive Bestärkung** (`reward = +1`)
   - Stop-Loss ausgelöst → **maximale negative Bestärkung** (`reward = -1`)
-  - Nach 1 Stunde geschlossen mit Gewinn → positive Bestärkung (proportional zum Ergebnis)
-  - Nach 1 Stunde geschlossen mit Verlust → negative Bestärkung (proportional zum Ergebnis)
-  - Kein eindeutiges Ergebnis (Ergebnis ~0) → **wird nicht für das Training verwendet**
+  - Timeout mit `|ergebnis| < 10 €` → **`reward = null`**, wird ignoriert
+  - Timeout mit Gewinn ≥ 10 € → positive Bestärkung (proportional zum Ergebnis)
+  - Timeout mit Verlust ≥ 10 € → negative Bestärkung (proportional zum Ergebnis)
 - [ ] Reward-Signal wird ans KNN zurückgegeben (Reinforcement Learning)
 - [ ] Tabelle `trades` in der Datenbank definieren:
   - `id` – Primärschlüssel
@@ -72,8 +73,16 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
   - `eroeffnet_at` – Zeitpunkt der Eröffnung
   - `geschlossen_at` – Zeitpunkt der Schließung
   - `schliessgrund` – `stop_loss`, `take_profit` oder `timeout`
-  - `ergebnis` – prozentuales Ergebnis nach Gebühren
-  - `reward` – verwendetes Reward-Signal (`-1` bis `+1`, oder `null` wenn ignoriert)
+  - `einsatz_eur` – virtueller Einsatz (100 €)
+  - `gebuehr_eur` – berechnete Gebühr in €
+  - `ergebnis_eur` – absolutes Ergebnis in € nach Gebühren
+  - `reward` – Reward-Signal (`-1` bis `+1`, oder `null` wenn ignoriert)
+- [ ] Tabelle `statistik` oder aggregierte View je Aktie:
+  - Anzahl Trades gesamt
+  - Anzahl Gewinntrades / Verlusttrades
+  - Gesamtgewinn / Gesamtverlust in €
+  - Trefferquote in %
+  - Durchschnittliches Ergebnis pro Trade
 
 ### Backend
 - [ ] REST API für Kursabfragen (z.B. `/kurse?aktie=AAPL&von=...&bis=...`)
@@ -82,9 +91,13 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 
 ### Frontend
 - [ ] Dashboard als Hauptansicht
-- [ ] Top 10 Long-Kandidaten anzeigen mit KNN-Ausgabewert als Gewichtungsindikator
-- [ ] Top 10 Short-Kandidaten anzeigen mit KNN-Ausgabewert als Gewichtungsindikator
-- [ ] Gewichtung visuell darstellen (z.B. Balken oder Farbskala von 0 bis 1)
+- [ ] Top 10 Long-Kandidaten mit KNN-Ausgabewert als Gewichtungsindikator (Balken/Farbskala)
+- [ ] Top 10 Short-Kandidaten mit KNN-Ausgabewert als Gewichtungsindikator (Balken/Farbskala)
+- [ ] Je Aktie in der Top-10-Liste: Gewinn/Verlust-Statistik anzeigen:
+  - Trefferquote (% Gewinntrades)
+  - Gesamtergebnis in € (kumuliert)
+  - Anzahl Trades
+- [ ] Gesamtstatistik des KNN über alle Aktien (Portfolio-Sicht)
 - [ ] Nutzer entscheidet selbst, ob und wie er handelt (kein automatischer Handel)
 - [ ] Kursverläufe der empfohlenen Aktien visualisieren
 
@@ -109,8 +122,7 @@ Ein modulares System, das Aktienkurse analysiert, per KI Prognosen erstellt und 
 - Soll `timestamp` als ein Feld gespeichert werden oder getrennt als `datum` + `uhrzeit`?
 - Welche SQL-Datenbank? (SQLite für Entwicklung, PostgreSQL für Produktion)
 - Wie groß soll das rollende Fenster für die Min-Max-Normalisierung sein? (z.B. 24h, 7 Tage)
-- Wie hoch soll die virtuelle Handelsgebühr pro Trade angesetzt werden?
-- Ab welchem `|reward|` gilt ein Ergebnis als "nicht eindeutig" und wird ignoriert?
+- Werden Gebühren nur beim Schließen berechnet oder auch beim Eröffnen? (Empfehlung: beide, je 0,5%)
 
 ---
 
