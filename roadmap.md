@@ -83,27 +83,27 @@ Ziel: Das neuronale Netz verarbeitet alle Aktien parallel und gibt Empfehlungen 
 
 ---
 
-## Phase 5 – Virtuelles Trading & Reinforcement Learning
+## Phase 5 – Virtuelles Trading & Reinforcement Learning ✅
 
 Ziel: KNN-Empfehlungen werden als virtuelle Trades ausgeführt und das Ergebnis trainiert das Modell.
 
-- [ ] Virtuellen Trade-Manager implementieren:
+- [x] Virtuellen Trade-Manager implementieren:
   - Einsatz: 100 € pro Trade
   - Gebühr Eröffnung: 0,5% auf Einsatz (= 0,50 €)
   - Gebühr Schließung: 0,5% auf aktuellen Positionswert
   - Stop-Loss bei -15% (netto nach Gebühren)
   - Take-Profit bei +15% (netto nach Gebühren)
   - Timeout nach 1 Stunde
-- [ ] Trade-Ergebnis in Tabelle `trades` schreiben
-- [ ] Reward-Berechnung:
+- [x] Trade-Ergebnis in Tabelle `trades` schreiben
+- [x] Reward-Berechnung:
   - Take-Profit → `reward = +1`
   - Stop-Loss → `reward = -1`
   - Timeout, `|ergebnis| ≥ 10 €` → proportionaler Reward
   - Timeout, `|ergebnis| < 10 €` → `reward = null` (ignoriert)
-- [ ] Reward-Signal ans KNN zurückgeben (Reinforcement Learning)
-- [ ] Trainingsloop: Nach jedem abgeschlossenen Trade Modell aktualisieren
+- [x] Reward-Signal ans KNN zurückgeben (Reinforcement Learning)
+- [x] Trainingsloop: Nach jedem abgeschlossenen Trade Modell aktualisieren
 
-**Meilenstein:** Das KNN lernt kontinuierlich aus seinen eigenen virtuellen Trades.
+**Meilenstein:** Das KNN lernt kontinuierlich aus seinen eigenen virtuellen Trades. ✅
 
 ---
 
