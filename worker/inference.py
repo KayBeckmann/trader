@@ -40,10 +40,16 @@ def get_model() -> TraderNet:
     if _model is None:
         _model = TraderNet()
         if CHECKPOINT_PATH.exists():
-            _model.load_state_dict(
-                torch.load(CHECKPOINT_PATH, map_location="cpu", weights_only=True)
-            )
-            logger.info("Checkpoint geladen: %s", CHECKPOINT_PATH)
+            try:
+                _model.load_state_dict(
+                    torch.load(CHECKPOINT_PATH, map_location="cpu", weights_only=True)
+                )
+                logger.info("Checkpoint geladen: %s", CHECKPOINT_PATH)
+            except Exception as exc:
+                logger.warning(
+                    "Checkpoint inkompatibel – starte mit neuen Gewichten: %s", exc
+                )
+                CHECKPOINT_PATH.unlink(missing_ok=True)
         else:
             logger.info("Kein Checkpoint – starte mit zufälligen Gewichten (Bootstrap).")
     return _model
