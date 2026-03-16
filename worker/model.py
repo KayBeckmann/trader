@@ -19,10 +19,12 @@ import os
 import torch
 import torch.nn as nn
 
-N_TICKERS = 90
+from tickers import TICKERS
+
+N_TICKERS = len(TICKERS)            # dynamisch aus tickers.py (aktuell 70)
 N_FEATURES = 3
-INPUT_SIZE = N_TICKERS * N_FEATURES  # 270
-OUTPUT_SIZE = N_TICKERS              # 90
+INPUT_SIZE = N_TICKERS * N_FEATURES  # 70 × 3 = 210
+OUTPUT_SIZE = N_TICKERS              # 70
 
 
 def _default_hidden() -> list[int]:
