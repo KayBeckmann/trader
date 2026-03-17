@@ -5,12 +5,12 @@ import time
 from apscheduler.schedulers.blocking import BlockingScheduler
 from sqlalchemy import text
 
-from db import engine
+from db import engine, run_migrations
 from features import build_tensor, compute_features
 from fetcher import backfill, fetch_current
 from inference import CHECKPOINT_PATH, get_model, run_inference, save_checkpoint
 from market_hours import is_market_open
-from trader import check_and_close_trades, open_trades
+from trader import check_and_close_trades, load_offene_trades, open_trades
 
 # Logging-Level aus Umgebungsvariable lesen (Standard: INFO)
 _level = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO)
@@ -65,6 +65,9 @@ def main() -> None:
     logger.info("Worker gestartet.")
     _wait_for_db()
 
+    logger.info("Führe DB-Migrationen durch…")
+    run_migrations()
+
     logger.info("Führe initialen Backfill durch…")
     backfill()
 
@@ -73,6 +76,9 @@ def main() -> None:
     if not CHECKPOINT_PATH.exists():
         save_checkpoint()
         logger.info("Bootstrap-Checkpoint angelegt.")
+
+    logger.info("Lade offene Trades aus DB…")
+    load_offene_trades()
 
     scheduler = BlockingScheduler(timezone="UTC")
     scheduler.add_job(job_kurs_abruf, "interval", minutes=5, id="kurs_abruf",
