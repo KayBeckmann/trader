@@ -52,7 +52,7 @@ class TraderNet(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        x: (batch, 270) oder (270,)
-        Gibt Tensor (batch, 90) oder (90,) zurück.
+        x: (batch, INPUT_SIZE) oder (INPUT_SIZE,)
+        Gibt Tensor (batch, N_TICKERS) oder (N_TICKERS,) zurück.
         """
         return self.net(x)

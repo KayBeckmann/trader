@@ -17,13 +17,15 @@ CREATE TABLE IF NOT EXISTS trades (
     aktie                   VARCHAR(20) NOT NULL,
     richtung                VARCHAR(5) NOT NULL CHECK (richtung IN ('long', 'short')),
     eroeffnet_at            TIMESTAMPTZ NOT NULL,
+    einstiegskurs           NUMERIC(12, 6),
     geschlossen_at          TIMESTAMPTZ,
     schliessgrund           VARCHAR(20) CHECK (schliessgrund IN ('stop_loss', 'take_profit', 'timeout')),
     einsatz_eur             NUMERIC(10, 2) NOT NULL DEFAULT 100.00,
     gebuehr_eroeffnung_eur  NUMERIC(10, 4) NOT NULL,
     gebuehr_schliessung_eur NUMERIC(10, 4),
     ergebnis_eur            NUMERIC(10, 4),
-    reward                  NUMERIC(5, 4)
+    reward                  NUMERIC(5, 4),
+    entry_features          TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_trades_aktie ON trades (aktie);
